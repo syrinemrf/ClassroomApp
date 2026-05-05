@@ -1,0 +1,101 @@
+﻿@model ClassroomApp.Models.ViewModels.Course.CreateCourseViewModel
+@{
+    ViewData["Title"] = "Ajouter un cours";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a onclick="history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h4 class="mb-0"><i class="fas fa-upload me-2"></i>Mettre en ligne un cours</h4>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label asp-for="SubjectId" class="form-label fw-semibold">
+                                Matiere <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="SubjectId" class="form-select" id="subjectSelect">
+                                <option value="">-- Selectionner une matiere --</option>
+                                @if (Model.AvailableSubjects != null)
+                                {
+                                    @foreach (var s in Model.AvailableSubjects)
+                                    {
+                                        @if (Model.SubjectId == s.Key) { <option value="@s.Key" selected>@s.Value</option> } else { <option value="@s.Key">@s.Value</option> }
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="SubjectId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Ex: Chapitre 1 - Introduction..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Description optionnelle..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                Classes concernees <span class="text-danger">*</span>
+                            </label>
+                            <p class="text-muted small mb-2">Selectionnez les classes qui auront acces a ce cours.</p>
+                            <div class="row g-2" id="classroomsContainer">
+                                @if (Model.AvailableClassrooms != null)
+                                {
+                                    @foreach (var c in Model.AvailableClassrooms)
+                                    {
+                                        <div class="col-md-4 col-sm-6">
+                                            <label class="classroom-check-label w-100">
+                                                <input class="classroom-check-input" type="checkbox" name="ClassroomIds" value="@c.Key" />
+                                                <div class="classroom-check-box">
+                                                    <i class="fas fa-users me-2 text-primary"></i>@c.Value
+                                                </div>
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            <span asp-validation-for="ClassroomIds" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="File" class="form-label fw-semibold">
+                                Fichier <span class="text-danger">*</span>
+                            </label>
+                            <div class="file-upload-zone p-4 text-center" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                <div class="text-muted small">Cliquez pour selectionner un fichier</div>
+                                <div id="fileName" class="text-primary fw-semibold mt-2"></div>
+                            </div>
+                            <input asp-for="File" class="form-control d-none" type="file" id="fileInput"
+                                   accept=".pdf,.docx,.pptx,.zip,.jpg,.jpeg,.png,.webp"
+                                   onchange="document.getElementById('fileName').textContent = this.files[0]?.name ?? ''" />
+                            <span asp-validation-for="File" class="text-danger small"></span>
+                            <small class="text-muted">Max 50MB. Formats : PDF, DOCX, PPTX, ZIP, Images</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Mettre en ligne
+                            </button>
+                            <a onclick="history.back()" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

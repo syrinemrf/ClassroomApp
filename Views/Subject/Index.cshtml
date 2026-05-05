@@ -1,0 +1,81 @@
+﻿@model List<ClassroomApp.Models.ViewModels.Subject.SubjectCardViewModel>
+@{
+    ViewData["Title"] = "Mes matieres";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 fw-bold">
+            <i class="fas fa-th-large me-2 text-primary"></i>Mes matieres
+        </h4>
+        <a href="@Url.Action("Create", "Course")" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Ajouter un cours
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="gc-empty-state text-center py-5">
+            <div class="gc-empty-icon mx-auto mb-3">
+                <i class="fas fa-chalkboard-teacher fa-3x text-muted"></i>
+            </div>
+            <h5 class="text-muted">Aucune matiere assignee</h5>
+            <p class="text-muted small">Demandez a un administrateur de vous assigner des matieres et des classes.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var card in Model)
+            {
+                <div class="col-sm-6 col-lg-4 col-xl-3">
+                    <div class="gc-card card border-0 shadow-sm h-100">
+                        <a href="@Url.Action("Details", "Subject", new { id = card.SubjectId })" class="text-decoration-none">
+                            <div class="gc-card-header" style="background: @card.Color;">
+                                <div class="gc-card-subject-name">@card.SubjectName</div>
+                                <div class="gc-card-classrooms">
+                                    @string.Join(" · ", card.ClassroomNames)
+                                </div>
+                                <div class="gc-card-avatar">
+                                    @if (!string.IsNullOrEmpty(card.TeacherProfilePicture))
+                                    {
+                                        <img src="@card.TeacherProfilePicture" alt="@card.TeacherName" />
+                                    }
+                                    else
+                                    {
+                                        <div class="gc-avatar-initials">@card.TeacherInitials</div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="gc-card-body">
+                                <div class="gc-card-stats">
+                                    <span class="gc-stat">
+                                        <i class="fas fa-book"></i> @card.CourseCount cours
+                                    </span>
+                                    <span class="gc-stat">
+                                        <i class="fas fa-tasks"></i> @card.AssignmentCount devoirs
+                                    </span>
+                                    <span class="gc-stat">
+                                        <i class="fas fa-users"></i> @card.StudentCount etudiants
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="gc-card-footer">
+                            <a href="@Url.Action("Create", "Course", new { subjectId = card.SubjectId })" class="gc-card-action" title="Ajouter un fichier de cours">
+                                <i class="fas fa-file-upload"></i>
+                            </a>
+                            <a href="@Url.Action("Create", "Assignment", new { subjectId = card.SubjectId })" class="gc-card-action" title="Creer un devoir">
+                                <i class="fas fa-plus-circle"></i>
+                            </a>
+                            <a href="@Url.Action("Details", "Subject", new { id = card.SubjectId })" class="gc-card-action" title="Voir la matiere">
+                                <i class="fas fa-folder-open"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

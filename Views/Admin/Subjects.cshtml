@@ -1,0 +1,85 @@
+﻿@model IEnumerable<ClassroomApp.Models.ViewModels.Admin.SubjectListItemViewModel>
+@{
+    ViewData["Title"] = "Matières";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0 fw-bold"><i class="fas fa-book-open me-2 text-primary"></i>Matières</h4>
+            <p class="text-muted small mb-0">Gérez les matières, affectez enseignants et classes</p>
+        </div>
+        <a href="@Url.Action("CreateSubject")" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nouvelle matière
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Aucune matière créée.</p>
+            <a href="@Url.Action("CreateSubject")" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Créer la première matière</a>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <input type="text" id="subjectSearch" class="form-control" placeholder="Rechercher une matière..." oninput="filterSubjects()">
+        </div>
+        <div class="row g-4" id="subjectGrid">
+            @foreach (var subject in Model)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="card shadow-sm h-100 card-hover subject-card" style="border-left: 4px solid @subject.Color !important;">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="subject-color-dot" style="background:@subject.Color"></div>
+                                    <h5 class="fw-bold mb-0">@subject.Name</h5>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(subject.Description))
+                            {
+                                <p class="text-muted small mb-3">@subject.Description</p>
+                            }
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-chalkboard-teacher text-muted" style="width:16px"></i>
+                                <span class="small fw-semibold">@subject.TeacherName</span>
+                            </div>
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fas fa-users text-muted mt-1" style="width:16px"></i>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var cls in subject.ClassroomNames)
+                                    {
+                                        <span class="badge rounded-pill" style="background:@subject.Color20; color:@subject.Color; border:1px solid @subject.Color">@cls</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent d-flex justify-content-end gap-2">
+                            <a href="@Url.Action("EditSubject", new { id = subject.Id })" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>Modifier
+                            </a>
+                            <form asp-action="DeleteSubject" method="post" class="delete-form d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@subject.Id" />
+                                <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fas fa-trash me-1"></i>Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+@section Scripts {
+<script>
+function filterSubjects() {
+    var q = document.getElementById('subjectSearch').value.toLowerCase();
+    document.querySelectorAll('#subjectGrid .col-md-6').forEach(function(col) {
+        var name = col.querySelector('h5') ? col.querySelector('h5').textContent.toLowerCase() : '';
+        col.style.display = name.includes(q) ? '' : 'none';
+    });
+}
+</script>
+}

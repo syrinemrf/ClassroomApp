@@ -1,0 +1,68 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Connexion";
+    Layout = "_Layout";
+}
+<div class="login-page">
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <div class="login-logo mx-auto">
+                <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="52" height="52">
+                    <path d="M30 6L50 16V28C50 40 41 50.5 30 54C19 50.5 10 40 10 28V16L30 6Z" fill="white" fill-opacity="0.95"/>
+                    <path d="M24 30.5L28 34.5L36 26.5" stroke="#4F46E5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h2 class="fw-bold mt-3 mb-0" style="letter-spacing:-.5px">ITBS Classroom</h2>
+            <p class="text-muted mt-1 mb-0 small">Plateforme pédagogique intelligente</p>
+        </div>
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label fw-semibold"><i class="fas fa-envelope me-1 text-primary"></i>Adresse email</label>
+                <input asp-for="Email" class="form-control form-control-lg" placeholder="votre@email.com" autofocus />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label fw-semibold"><i class="fas fa-lock me-1 text-primary"></i>Mot de passe</label>
+                <div class="input-group">
+                    <input asp-for="Password" class="form-control form-control-lg" placeholder="••••••••" id="passwordInput" />
+                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+            <div class="mb-4 form-check">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label">Se souvenir de moi</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </button>
+        </form>
+        <div class="mt-4 p-3 rounded-3 bg-light">
+            <p class="small text-muted mb-2 fw-semibold text-center">Comptes de démonstration</p>
+            <div class="d-flex flex-column gap-1 small">
+                <div class="d-flex justify-content-between"><span><i class="fas fa-user-shield me-1 text-danger"></i>Admin</span><code>admin@classroom.com / Admin@123</code></div>
+                <div class="d-flex justify-content-between"><span><i class="fas fa-chalkboard-teacher me-1 text-primary"></i>Enseignant</span><code>ahmed.benali@classroom.com / Teacher@123</code></div>
+                <div class="d-flex justify-content-between"><span><i class="fas fa-user-graduate me-1 text-success"></i>Étudiant</span><code>youssef.amrani@student.com / Student@123</code></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+    </script>
+}

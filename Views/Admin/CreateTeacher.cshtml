@@ -1,0 +1,57 @@
+@model CreateTeacherViewModel
+@{
+    ViewData["Title"] = "Nouvel enseignant";
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="@Url.Action("Teachers")" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i></a>
+        <h4 class="mb-0 fw-bold"><i class="fas fa-plus me-2 text-primary"></i>Nouvel enseignant</h4>
+    </div>
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="CreateTeacher" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                                <input asp-for="FirstName" class="form-control" placeholder="Prénom..." />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                                <input asp-for="LastName" class="form-control" placeholder="Nom de famille..." />
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <input asp-for="Email" class="form-control" type="email" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Password" class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
+                                <input asp-for="Password" class="form-control" type="password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Department" class="form-label fw-semibold">Département</label>
+                            <input asp-for="Department" class="form-control" placeholder="ex: Informatique, Mathématiques..." />
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="Bio" class="form-label fw-semibold">Biographie</label>
+                            <textarea asp-for="Bio" class="form-control" rows="3" placeholder="Présentation de l'enseignant..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Créer l'enseignant</button>
+                            <a href="@Url.Action("Teachers")" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

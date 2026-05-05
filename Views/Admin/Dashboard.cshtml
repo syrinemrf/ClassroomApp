@@ -1,0 +1,101 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+<div class="container-fluid">
+    <h4 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h4>
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted small mb-1">Teachers</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalTeachers</h3>
+                        </div>
+                        <div class="stat-icon bg-primary-subtle text-primary"><i class="fas fa-chalkboard-teacher"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted small mb-1">Students</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalStudents</h3>
+                        </div>
+                        <div class="stat-icon bg-success-subtle text-success"><i class="fas fa-user-graduate"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted small mb-1">Classrooms</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalClassrooms</h3>
+                        </div>
+                        <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-school"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card stat-card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted small mb-1">Courses</p>
+                            <h3 class="fw-bold mb-0">@Model.TotalCourses</h3>
+                        </div>
+                        <div class="stat-icon bg-info-subtle text-info"><i class="fas fa-book"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">Recent Activity</h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecentActivity.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var item in Model.RecentActivity)
+                            {
+                                <div class="list-group-item d-flex align-items-center gap-3">
+                                    <div class="stat-icon-sm @item.IconColor"><i class="fas @item.Icon"></i></div>
+                                    <div class="flex-grow-1">
+                                        <p class="mb-0 small">@item.Description</p>
+                                        <small class="text-muted">@item.Timestamp.ToString("MMM dd, yyyy HH:mm")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">No recent activity.</div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Quick Actions</h6></div>
+                <div class="card-body d-grid gap-2">
+                    <a href="@Url.Action("CreateTeacher", "Admin")" class="btn btn-outline-primary"><i class="fas fa-plus me-2"></i>New Teacher</a>
+                    <a href="@Url.Action("CreateStudent", "Admin")" class="btn btn-outline-success"><i class="fas fa-plus me-2"></i>New Student</a>
+                    <a href="@Url.Action("CreateClassroom", "Admin")" class="btn btn-outline-warning"><i class="fas fa-plus me-2"></i>New Classroom</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

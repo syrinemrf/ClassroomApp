@@ -1,0 +1,49 @@
+@model MySubmissionsViewModel
+@{
+    ViewData["Title"] = "My Submissions";
+}
+<div class="container-fluid">
+    <h4 class="mb-4"><i class="fas fa-clipboard-check me-2"></i>My Submissions & Grades</h4>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover" id="mySubmissionsTable">
+                <thead>
+                    <tr><th>Assignment</th><th>Classroom</th><th>Submitted</th><th>Status</th><th>Score</th><th>Comment</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Submissions)
+                    {
+                        var statusClass = s.Status switch
+                        {
+                            SubmissionStatus.Graded => "bg-success",
+                            SubmissionStatus.Submitted => "bg-primary",
+                            SubmissionStatus.Late => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                        <tr>
+                            <td class="fw-bold">@s.AssignmentTitle</td>
+                            <td>@s.ClassroomName</td>
+                            <td>@(s.SubmittedAt?.ToString("MMM dd HH:mm") ?? "—")</td>
+                            <td><span class="badge @statusClass">@s.Status</span></td>
+                            <td>
+                                @if (s.Score.HasValue)
+                                {
+                                    var pct = (int)(s.Score.Value * 100.0 / s.MaxScore);
+                                    <span class="fw-bold @(pct >= 60 ? "text-success" : "text-danger")">@s.Score / @s.MaxScore</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>@(s.TeacherComment ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>$(document).ready(function() { $('#mySubmissionsTable').DataTable({ pageLength: 10, order: [[2, 'desc']] }); });</script>
+}

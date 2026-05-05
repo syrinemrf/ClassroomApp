@@ -1,0 +1,77 @@
+@model List<CommentItem>
+@{
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+<div class="card shadow-sm">
+    <div class="card-header bg-white"><h6 class="mb-0 fw-bold"><i class="fas fa-comments me-2"></i>Comments (@Model.Count)</h6></div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            @foreach (var comment in Model)
+            {
+                <div class="d-flex gap-3 mb-3">
+                    @if (!string.IsNullOrEmpty(comment.UserProfilePicture))
+                    {
+                        <img src="@comment.UserProfilePicture" class="avatar-sm rounded-circle" />
+                    }
+                    else
+                    {
+                        <div class="avatar-sm avatar-initials">@comment.UserName[0]</div>
+                    }
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@comment.UserName</strong>
+                                <span class="badge bg-secondary-subtle text-secondary ms-1">@comment.UserRole</span>
+                                <small class="text-muted ms-2">@comment.CreatedAt.ToString("MMM dd HH:mm")</small>
+                            </div>
+                            @if (comment.UserId.ToString() == currentUserId)
+                            {
+                                <form asp-action="Delete" asp-controller="Comment" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@comment.Id" />
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            }
+                        </div>
+                        <p class="mb-1">@comment.Content</p>
+
+                        @if (comment.Replies.Any())
+                        {
+                            @foreach (var reply in comment.Replies)
+                            {
+                                <div class="d-flex gap-2 ms-4 mt-2 ps-3 border-start">
+                                    <div class="avatar-xs avatar-initials">@reply.UserName[0]</div>
+                                    <div>
+                                        <strong class="small">@reply.UserName</strong>
+                                        <span class="badge bg-secondary-subtle text-secondary ms-1" style="font-size:0.65rem;">@reply.UserRole</span>
+                                        <small class="text-muted ms-1">@reply.CreatedAt.ToString("MMM dd HH:mm")</small>
+                                        <p class="mb-0 small">@reply.Content</p>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        @if (currentRole == "Teacher")
+                        {
+                            <form asp-action="Reply" asp-controller="Comment" method="post" class="mt-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="parentCommentId" value="@comment.Id" />
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="content" class="form-control" placeholder="Reply..." required />
+                                    <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-reply"></i></button>
+                                </div>
+                            </form>
+                        }
+                    </div>
+                </div>
+                <hr />
+            }
+        }
+        else
+        {
+            <p class="text-muted text-center">No comments yet.</p>
+        }
+    </div>
+</div>

@@ -1,0 +1,90 @@
+@model AssignmentViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+}
+<div class="container-fluid">
+    <h4 class="mb-4"><i class="fas fa-file-alt me-2"></i>@Model.Title</h4>
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge @Model.DeadlineBadgeClass fs-6">@Model.DeadlineStatus</span>
+                        <span class="text-muted small">by @Model.TeacherName</span>
+                    </div>
+                    <p>@Model.Description</p>
+                    <div class="row text-muted small">
+                        <div class="col-md-6"><i class="fas fa-calendar me-1"></i>Deadline: @Model.Deadline.ToString("MMM dd, yyyy HH:mm")</div>
+                        <div class="col-md-6"><i class="fas fa-star me-1"></i>Max Score: @Model.MaxScore</div>
+                    </div>
+                    <div class="deadline-countdown mt-3" data-deadline="@Model.Deadline.ToString("o")"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">My Submission</h6></div>
+                <div class="card-body">
+                    @if (Model.MySubmissionStatus.HasValue && Model.MySubmissionStatus != SubmissionStatus.Pending)
+                    {
+                        var statusClass = Model.MySubmissionStatus switch
+                        {
+                            SubmissionStatus.Graded => "bg-success",
+                            SubmissionStatus.Submitted => "bg-primary",
+                            SubmissionStatus.Late => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                        <div class="text-center">
+                            <span class="badge @statusClass fs-6 mb-2">@Model.MySubmissionStatus</span>
+                            @if (Model.MyScore.HasValue)
+                            {
+                                <h4 class="fw-bold mt-2">@Model.MyScore / @Model.MaxScore</h4>
+                                <div class="progress mb-2" style="height:8px;">
+                                    @{ var pct = (int)(Model.MyScore.Value * 100.0 / Model.MaxScore); }
+                                    <div class="progress-bar @(pct >= 60 ? "bg-success" : "bg-danger")" style="width:@pct%"></div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(Model.MyTeacherComment))
+                                {
+                                    <div class="alert alert-info small mt-2">
+                                        <i class="fas fa-comment me-1"></i>@Model.MyTeacherComment
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        @if (DateTime.UtcNow <= Model.Deadline)
+                        {
+                            <a href="@Url.Action("Submit", "Submission", new { assignmentId = Model.Id })" class="btn btn-primary w-100">
+                                <i class="fas fa-upload me-2"></i>Submit Assignment
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Submit", "Submission", new { assignmentId = Model.Id })" class="btn btn-warning w-100">
+                                <i class="fas fa-upload me-2"></i>Submit (Late)
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Comments", Model.Comments)
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <form asp-action="Create" asp-controller="Comment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="assignmentId" value="@Model.Id" />
+                <div class="input-group">
+                    <input type="text" name="content" class="form-control" placeholder="Write a comment..." required />
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

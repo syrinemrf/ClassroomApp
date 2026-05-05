@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "AI Assistant";
+}
+<div class="container-fluid">
+    <h4 class="mb-4"><i class="fas fa-robot me-2"></i>AI Assistant</h4>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">Chat</h6>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearChat()"><i class="fas fa-trash me-1"></i>Clear</button>
+                </div>
+                <div class="card-body" style="height: 400px; overflow-y: auto;" id="aiChatBox">
+                    <div class="d-flex mb-3">
+                        <div class="chat-bubble chat-received">
+                            <p class="mb-0">Hello! ?? I'm your AI assistant. Ask me anything about your coursework and I'll help you understand it better.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="aiInput" placeholder="Ask a question..." />
+                        <button class="btn btn-primary" id="aiSendBtn" onclick="askAI()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Suggested Questions</h6></div>
+                <div class="card-body d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm text-start" onclick="setQuestion('Can you explain the main concepts of my latest course?')">
+                        <i class="fas fa-lightbulb me-2"></i>Explain course concepts
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start" onclick="setQuestion('Help me understand how to approach my assignment')">
+                        <i class="fas fa-file-alt me-2"></i>Help with assignment
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start" onclick="setQuestion('Can you give me a summary of the key topics I should study?')">
+                        <i class="fas fa-book me-2"></i>Study summary
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm text-start" onclick="setQuestion('What are common mistakes students make in this subject?')">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Common mistakes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        var token = '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+
+        function setQuestion(q) { document.getElementById('aiInput').value = q; askAI(); }
+        function clearChat() {
+            var box = document.getElementById('aiChatBox');
+            box.innerHTML = '<div class="d-flex mb-3"><div class="chat-bubble chat-received"><p class="mb-0">Chat cleared. Ask me anything! ??</p></div></div>';
+        }
+
+        function askAI() {
+            var input = document.getElementById('aiInput');
+            var q = input.value.trim();
+            if (!q) return;
+            input.value = '';
+
+            var box = document.getElementById('aiChatBox');
+            box.innerHTML += '<div class="d-flex mb-3 justify-content-end"><div class="chat-bubble chat-sent"><p class="mb-0">' + escapeHtml(q) + '</p></div></div>';
+            box.innerHTML += '<div class="d-flex mb-3" id="aiTyping"><div class="chat-bubble chat-received"><p class="mb-0"><i class="fas fa-spinner fa-spin me-2"></i>Thinking...</p></div></div>';
+            box.scrollTop = box.scrollHeight;
+
+            document.getElementById('aiSendBtn').disabled = true;
+
+            fetch('@Url.Action("Ask")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify({ question: q })
+            })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('aiTyping')?.remove();
+                var html = typeof marked !== 'undefined' ? marked.parse(d.response || d.error) : (d.response || d.error);
+                box.innerHTML += '<div class="d-flex mb-3"><div class="chat-bubble chat-received">' + html + '</div></div>';
+                box.scrollTop = box.scrollHeight;
+            })
+            .catch(e => {
+                document.getElementById('aiTyping')?.remove();
+                box.innerHTML += '<div class="d-flex mb-3"><div class="chat-bubble chat-received text-danger"><p class="mb-0">Error: ' + e.message + '</p></div></div>';
+            })
+            .finally(() => { document.getElementById('aiSendBtn').disabled = false; });
+        }
+
+        document.getElementById('aiInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') askAI(); });
+
+        function escapeHtml(text) {
+            var d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+    </script>
+}

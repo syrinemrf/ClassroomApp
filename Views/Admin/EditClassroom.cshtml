@@ -1,0 +1,42 @@
+@model ClassroomApp.Models.ViewModels.Admin.CreateClassroomViewModel
+@{
+    ViewData["Title"] = "Modifier la classe";
+    var classroomId = ViewBag.ClassroomId as Guid?;
+}
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="@Url.Action("Classrooms")" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i></a>
+        <h4 class="mb-0 fw-bold"><i class="fas fa-edit me-2 text-primary"></i>Modifier la classe</h4>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="EditClassroom" asp-route-id="@classroomId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row mb-3">
+                            <div class="col-md-7">
+                                <label asp-for="Name" class="form-label fw-semibold">Nom de la classe <span class="text-danger">*</span></label>
+                                <input asp-for="Name" class="form-control form-control-lg" placeholder="ex: 2BI, 3INFO-A..." />
+                                <span asp-validation-for="Name" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-5">
+                                <label asp-for="AcademicYear" class="form-label fw-semibold">Année académique <span class="text-danger">*</span></label>
+                                <input asp-for="AcademicYear" class="form-control form-control-lg" placeholder="2024-2025" />
+                                <span asp-validation-for="AcademicYear" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="2" placeholder="ex: 2ème année cycle ingénieur spécialité BI..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Enregistrer</button>
+                            <a href="@Url.Action("Classrooms")" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

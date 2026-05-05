@@ -1,0 +1,536 @@
+﻿@model ClassroomApp.Models.ViewModels.Subject.SubjectDetailsViewModel
+@using ClassroomApp.Models.Enums
+@{
+    ViewData["Title"] = Model.SubjectName;
+    Layout = Model.IsTeacher ? "~/Views/Shared/_TeacherLayout.cshtml" : "~/Views/Shared/_StudentLayout.cshtml";
+    var activeTab = ViewBag.ActiveTab as string ?? "stream";
+}
+
+@section Styles {
+<style>
+.gc-subject-banner {
+    background: @Model.Color;
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+.gc-subject-banner::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+}
+.gc-subject-banner-title {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    position: relative;
+    z-index: 1;
+}
+.gc-subject-banner-sub {
+    font-size: 0.9rem;
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+    margin-top: 0.25rem;
+}
+.gc-tabs { 
+    border-bottom: 1px solid #e2e8f0; 
+    background: white; 
+    padding: 0 1rem;
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.gc-tab-link {
+    display: inline-block;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+.gc-tab-link:hover { color: #1e293b; }
+.gc-tab-link.active { color: @Model.Color; border-bottom-color: @Model.Color; font-weight: 600; }
+
+.gc-stream-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: box-shadow 0.2s;
+}
+.gc-stream-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.gc-stream-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.gc-stream-avatar-initials {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: @Model.Color;
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.gc-file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: #374151;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+}
+.gc-file-chip:hover { background: #e2e8f0; color: #374151; }
+
+.gc-work-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: box-shadow 0.2s;
+}
+.gc-work-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.gc-work-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+.gc-work-icon.course { background: #dbeafe; color: #1d4ed8; }
+.gc-work-icon.assignment { background: #fef9c3; color: #92400e; }
+.gc-person-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.gc-person-row:last-child { border-bottom: none; }
+</style>
+}
+
+<div class="container-fluid">
+    <!-- Banner -->
+    <div class="gc-subject-banner mb-0">
+        <div class="gc-subject-banner-title">@Model.SubjectName</div>
+        <div class="gc-subject-banner-sub">
+            @Model.TeacherName &nbsp;&bull;&nbsp;
+            @string.Join(" · ", Model.Classrooms.Select(c => c.Name))
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="gc-tabs">
+        <a href="@Url.Action("Details", "Subject", new { id = Model.SubjectId, tab = "stream" })"
+           class="gc-tab-link @(activeTab == "stream" ? "active" : "")">Stream</a>
+        <a href="@Url.Action("Details", "Subject", new { id = Model.SubjectId, tab = "classwork" })"
+           class="gc-tab-link @(activeTab == "classwork" ? "active" : "")">Travaux</a>
+        <a href="@Url.Action("Details", "Subject", new { id = Model.SubjectId, tab = "people" })"
+           class="gc-tab-link @(activeTab == "people" ? "active" : "")">Personnes</a>
+    </div>
+
+    <!-- STREAM -->
+    @if (activeTab == "stream")
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                @if (!Model.StreamItems.Any())
+                {
+                    <div class="gc-stream-card text-center py-5">
+                        <i class="fas fa-stream fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune activite dans cette matiere pour le moment.</p>
+                        @if (Model.IsTeacher)
+                        {
+                            <div class="d-flex gap-2 justify-content-center mt-3">
+                                <a href="@Url.Action("Create", "Course", new { subjectId = Model.SubjectId })" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-upload me-1"></i>Ajouter un cours
+                                </a>
+                                <a href="@Url.Action("Create", "Assignment", new { subjectId = Model.SubjectId })" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-plus me-1"></i>Creer un devoir
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in Model.StreamItems)
+                    {
+                        <div class="gc-stream-card">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                @if (!string.IsNullOrEmpty(item.AuthorPicture))
+                                {
+                                    <img src="@item.AuthorPicture" class="gc-stream-avatar" />
+                                }
+                                else
+                                {
+                                    <div class="gc-stream-avatar-initials">@item.AuthorInitials</div>
+                                }
+                                <div>
+                                    <div class="fw-semibold small">@item.AuthorName</div>
+                                    <div class="text-muted" style="font-size:0.75rem">@item.CreatedAt.ToString("dd MMM yyyy - HH:mm")</div>
+                                </div>
+                                <span class="ms-auto badge @(item.Type == "Course" ? "bg-primary-subtle text-primary" : "bg-warning-subtle text-warning-emphasis")">
+                                    <i class="fas @(item.Type == "Course" ? "fa-book" : "fa-tasks") me-1"></i>
+                                    @(item.Type == "Course" ? "Cours" : "Devoir")
+                                </span>
+                            </div>
+                            <div class="fw-semibold mb-1">@item.Title</div>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="text-muted small mb-2">@item.Description</p>
+                            }
+                            @if (item.Deadline.HasValue)
+                            {
+                                <div class="text-muted small mb-2">
+                                    <i class="fas fa-calendar me-1"></i>Echeance : @item.Deadline.Value.ToString("dd MMM yyyy - HH:mm")
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(item.FileName))
+                            {
+                                @if (item.Type == "Course")
+                                {
+                                    <a href="@Url.Action("Download", "Course", new { id = item.Id })" class="gc-file-chip">
+                                        <i class="fas @(item.FileIcon ?? "fa-file")"></i>
+                                        @item.FileName
+                                    </a>
+                                }
+                            }
+                            @if (item.Type == "Assignment")
+                            {
+                                @if (Model.IsTeacher)
+                                {
+                                    <a href="@Url.Action("Details", "Assignment", new { id = item.Id })" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-eye me-1"></i>Voir les rendus
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("StudentDetails", "Assignment", new { id = item.Id })" class="btn btn-sm btn-outline-primary mt-2">
+                                        <i class="fas fa-eye me-1"></i>Voir le devoir
+                                    </a>
+                                }
+                            }
+                        </div>
+                    }
+                }
+            </div>
+            <div class="col-lg-4">
+                @if (Model.IsTeacher)
+                {
+                    <div class="card border-0 shadow-sm mb-3">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Actions rapides</h6>
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Create", "Course", new { subjectId = Model.SubjectId })" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-upload me-2"></i>Ajouter un cours
+                                </a>
+                                <a href="@Url.Action("Create", "Assignment", new { subjectId = Model.SubjectId })" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-plus me-2"></i>Creer un devoir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h6 class="fw-bold mb-0">Prochaines echeances</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        @{ var upcoming = Model.Assignments.Where(a => a.Deadline > DateTime.UtcNow).OrderBy(a => a.Deadline).Take(5).ToList(); }
+                        @if (!upcoming.Any())
+                        {
+                            <div class="text-center text-muted small py-3">Aucune echeance proche</div>
+                        }
+                        else
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var a in upcoming)
+                                {
+                                    <div class="list-group-item list-group-item-action px-3 py-2">
+                                        <div class="fw-semibold small">@a.Title</div>
+                                        <div class="text-muted" style="font-size:0.75rem">
+                                            <i class="fas fa-calendar me-1"></i>@a.Deadline.ToString("dd MMM HH:mm")
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- CLASSWORK -->
+    @if (activeTab == "classwork")
+    {
+        @if (Model.IsTeacher)
+        {
+            <div class="d-flex gap-2 mb-4">
+                <a href="@Url.Action("Create", "Course", new { subjectId = Model.SubjectId })" class="btn btn-primary btn-sm">
+                    <i class="fas fa-upload me-1"></i>Ajouter un cours
+                </a>
+                <a href="@Url.Action("Create", "Assignment", new { subjectId = Model.SubjectId })" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i>Creer un devoir
+                </a>
+            </div>
+        }
+
+        @if (!Model.Courses.Any() && !Model.Assignments.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucun contenu dans cette matiere.</p>
+            </div>
+        }
+
+        @if (Model.Assignments.Any())
+        {
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div style="width:4px;height:24px;background:@Model.Color;border-radius:2px"></div>
+                    <h6 class="fw-bold mb-0 text-uppercase small text-muted letter-spacing-1">Devoirs</h6>
+                </div>
+                @foreach (var a in Model.Assignments.OrderByDescending(x => x.Deadline))
+                {
+                    <div class="gc-work-item">
+                        <div class="gc-work-icon assignment">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            @if (Model.IsTeacher)
+                            {
+                                <a href="@Url.Action("Details", "Assignment", new { id = a.Id })" class="fw-semibold text-dark text-decoration-none">@a.Title</a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("StudentDetails", "Assignment", new { id = a.Id })" class="fw-semibold text-dark text-decoration-none">@a.Title</a>
+                            }
+                            <div class="text-muted small mt-1">
+                                <i class="fas fa-calendar me-1"></i>
+                                @if (DateTime.UtcNow > a.Deadline)
+                                {
+                                    <span class="text-danger">Expire le @a.Deadline.ToString("dd MMM yyyy HH:mm")</span>
+                                }
+                                else
+                                {
+                                    <span>Echeance : @a.Deadline.ToString("dd MMM yyyy HH:mm")</span>
+                                }
+                                &nbsp;&bull;&nbsp; @a.MaxScore pts
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            @if (Model.IsTeacher)
+                            {
+                                <span class="badge @a.DeadlineBadgeClass">@a.DeadlineStatus</span>
+                                <div class="small text-muted mt-1">@a.SubmissionCount/@a.TotalStudents rendus</div>
+                                <div class="d-flex gap-1 mt-1 justify-content-end">
+                                    <a href="@Url.Action("Edit", "Assignment", new { id = a.Id })" class="btn btn-xs btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-controller="Assignment" method="post" class="d-inline delete-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@a.Id" />
+                                        <input type="hidden" name="returnSubjectId" value="@Model.SubjectId" />
+                                        <button type="submit" class="btn btn-xs btn-outline-danger delete-btn"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                @if (!a.MySubmissionStatus.HasValue || a.MySubmissionStatus == SubmissionStatus.Pending)
+                                {
+                                    <a href="@Url.Action("Submit", "Submission", new { assignmentId = a.Id })" class="btn btn-xs btn-primary">
+                                        Rendre
+                                    </a>
+                                }
+                                else if (a.MySubmissionStatus == SubmissionStatus.Graded)
+                                {
+                                    <span class="badge bg-success">@a.MyScore / @a.MaxScore</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary">Rendu</span>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Model.Courses.Any())
+        {
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div style="width:4px;height:24px;background:#64748b;border-radius:2px"></div>
+                    <h6 class="fw-bold mb-0 text-uppercase small text-muted">Documents de cours</h6>
+                </div>
+                @foreach (var c in Model.Courses.OrderByDescending(x => x.CreatedAt))
+                {
+                    <div class="gc-work-item">
+                        <div class="gc-work-icon course">
+                            <i class="fas @c.FileTypeIcon"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">@c.Title</div>
+                            <div class="text-muted small">
+                                @c.FileName &bull; @c.FileSizeFormatted
+                                &bull; @c.CreatedAt.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1 align-items-center">
+                            <a href="@Url.Action("Download", "Course", new { id = c.Id })" class="btn btn-xs btn-outline-primary">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            @if (Model.IsTeacher)
+                            {
+                                <form asp-action="Delete" asp-controller="Course" method="post" class="d-inline delete-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@c.Id" />
+                                    <input type="hidden" name="returnSubjectId" value="@Model.SubjectId" />
+                                    <button class="btn btn-xs btn-outline-danger delete-btn" type="submit"><i class="fas fa-trash"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    <!-- PEOPLE -->
+    @if (activeTab == "people")
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="fw-bold mb-0">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Enseignant
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="gc-person-row">
+                            @if (!string.IsNullOrEmpty(Model.TeacherProfilePicture))
+                            {
+                                <img src="@Model.TeacherProfilePicture" class="avatar-sm" />
+                            }
+                            else
+                            {
+                                <div class="avatar-sm avatar-initials" style="background:@Model.Color">@Model.TeacherInitials</div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@Model.TeacherName</div>
+                                <div class="text-muted small">Enseignant</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Students.Any())
+                {
+                    @foreach (var classroom in Model.Classrooms)
+                    {
+                        var classStudents = Model.Students.Where(s => s.ClassroomName == classroom.Name).ToList();
+                        if (classStudents.Any())
+                        {
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-header bg-white border-bottom">
+                                    <h6 class="fw-bold mb-0">
+                                        <i class="fas fa-users me-2"></i>@classroom.Name
+                                        <span class="badge bg-secondary ms-2">@classStudents.Count</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    @foreach (var student in classStudents)
+                                    {
+                                        <div class="gc-person-row">
+                                            @if (!string.IsNullOrEmpty(student.ProfilePicture))
+                                            {
+                                                <img src="@student.ProfilePicture" class="avatar-sm" />
+                                            }
+                                            else
+                                            {
+                                                <div class="avatar-sm avatar-initials">@student.Initials</div>
+                                            }
+                                            <div>
+                                                <div class="fw-semibold small">@student.Name</div>
+                                                @if (!string.IsNullOrEmpty(student.StudentNumber))
+                                                {
+                                                    <div class="text-muted" style="font-size:0.75rem">N° @student.StudentNumber</div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-user-graduate me-2"></i>Aucun etudiant inscrit
+                    </div>
+                }
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="h2 fw-bold" style="color:@Model.Color">@Model.Students.Count</div>
+                        <div class="text-muted small">Etudiants inscrits</div>
+                        <hr />
+                        <div class="h4 fw-bold">@Model.Classrooms.Count</div>
+                        <div class="text-muted small">Classes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+// Confirm delete
+document.querySelectorAll('.delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        if (!confirm('Supprimer cet element ?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+}

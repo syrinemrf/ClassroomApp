@@ -1,0 +1,97 @@
+﻿@model List<Classroom>
+@using ClassroomApp.Models.Entities
+@{
+    ViewData["Title"] = "Classes";
+}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0 fw-bold"><i class="fas fa-users-rectangle me-2 text-primary"></i>Classes</h4>
+            <p class="text-muted small mb-0">Groupes d'étudiants — ex: 2BI, 3INFO-A</p>
+        </div>
+        <a href="@Url.Action("CreateClassroom")" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nouvelle classe
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-users-rectangle fa-3x text-muted mb-3"></i>
+            <p class="text-muted">Aucune classe créée.</p>
+            <a href="@Url.Action("CreateClassroom")" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Créer la première classe</a>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <input type="text" id="classroomSearch" class="form-control" placeholder="Rechercher une classe..." oninput="filterClassrooms()">
+        </div>
+        <div class="row g-4" id="classroomGrid">
+            @foreach (var classroom in Model)
+            {
+                var subjects = classroom.SubjectClassrooms.Select(sc => sc.Subject).ToList();
+                <div class="col-md-6 col-xl-4">
+                    <div class="card shadow-sm h-100 card-hover">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="fw-bold mb-0">@classroom.Name</h5>
+                                    <span class="badge bg-secondary-subtle text-secondary small">@classroom.AcademicYear</span>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                    <i class="fas fa-user-graduate me-1"></i>@classroom.Students.Count
+                                </span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(classroom.Description))
+                            {
+                                <p class="text-muted small mb-3">@classroom.Description</p>
+                            }
+                            @if (subjects.Any())
+                            {
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    @foreach (var s in subjects)
+                                    {
+                                        <span class="badge rounded-pill small" style="background:@(s.Color + "26"); color:@s.Color; border:1px solid @s.Color">
+                                            @s.Name
+                                        </span>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small fst-italic mb-0">Aucune matière affectée</p>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                            <a href="@Url.Action("Students", new { classroomId = classroom.Id })" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-users me-1"></i>Étudiants
+                            </a>
+                            <div class="d-flex gap-2">
+                                <a href="@Url.Action("EditClassroom", new { id = classroom.Id })" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form asp-action="DeleteClassroom" method="post" class="delete-form d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@classroom.Id" />
+                                    <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+@section Scripts {
+<script>
+function filterClassrooms() {
+    var q = document.getElementById('classroomSearch').value.toLowerCase();
+    document.querySelectorAll('#classroomGrid .col-md-6').forEach(function(col) {
+        var name = col.querySelector('h5') ? col.querySelector('h5').textContent.toLowerCase() : '';
+        col.style.display = name.includes(q) ? '' : 'none';
+    });
+}
+</script>
+}

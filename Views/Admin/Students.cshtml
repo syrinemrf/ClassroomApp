@@ -1,0 +1,109 @@
+﻿@model List<Student>
+@using ClassroomApp.Helpers
+@{
+    ViewData["Title"] = "Étudiants";
+    var classrooms = ViewBag.Classrooms as List<Classroom>;
+    var selectedClassroom = ViewBag.SelectedClassroom as Guid?;
+}
+<div class="container-fluid">
+    <div class="page-header mb-4">
+        <div>
+            <h4 class="page-title"><i class="fas fa-user-graduate me-2"></i>Étudiants</h4>
+            <p class="page-subtitle">Gestion des comptes étudiants</p>
+        </div>
+        <a href="@Url.Action("CreateStudent")" class="btn btn-primary btn-icon">
+            <i class="fas fa-plus me-2"></i>Nouvel étudiant
+        </a>
+    </div>
+
+    <div class="filter-bar card mb-3">
+        <div class="card-body py-2 px-3">
+            <form method="get" class="d-flex align-items-center gap-3">
+                <i class="fas fa-filter text-muted small"></i>
+                <label class="form-label mb-0 small fw-semibold text-muted">Classe :</label>
+                <select name="classroomId" class="form-select form-select-sm" style="max-width:220px" onchange="this.form.submit()">
+                    <option value="">Toutes les classes</option>
+                    @if (classrooms != null)
+                    {
+                        @foreach (var c in classrooms)
+                        {
+                            if (selectedClassroom == c.Id) { <option value="@c.Id" selected>@c.Name</option> } else { <option value="@c.Id">@c.Name</option> }
+                        }
+                    }
+                </select>
+                @if (selectedClassroom.HasValue)
+                {
+                    <a href="@Url.Action("Students")" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Effacer
+                    </a>
+                }
+            </form>
+        </div>
+    </div>
+
+    <div class="card data-card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Étudiant</th>
+                        <th>Email</th>
+                        <th>N° étudiant</th>
+                        <th>Classe</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in Model)
+                    {
+                        var initials = FileHelper.GetInitials(student.User.FirstName, student.User.LastName);
+                        <tr class="table-row-animate">
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(student.User.ProfilePicturePath))
+                                    {
+                                        <img src="@student.User.ProfilePicturePath" class="avatar-sm" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-sm avatar-initials">@initials</div>
+                                    }
+                                    <div>
+                                        <div class="fw-semibold">@student.User.FirstName @student.User.LastName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted small align-middle">@student.User.Email</td>
+                            <td class="align-middle"><code class="code-badge">@student.StudentNumber</code></td>
+                            <td class="align-middle"><span class="badge badge-classroom">@student.Classroom.Name</span></td>
+                            <td class="text-end align-middle">
+                                <a href="@Url.Action("EditUser", new { id = student.User.Id })" class="btn btn-sm btn-ghost-primary me-1">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form asp-action="DeleteStudent" method="post" class="d-inline delete-form">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@student.Id" />
+                                    <button type="submit" class="btn btn-sm btn-ghost-danger delete-btn">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#studentsTable').DataTable({
+                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json' },
+                pageLength: 15,
+                dom: '<"row align-items-center mb-3"<"col-sm-6"l><"col-sm-6 text-end"f>>rt<"row align-items-center mt-3"<"col-sm-6"i><"col-sm-6"p>>',
+            });
+        });
+    </script>
+}

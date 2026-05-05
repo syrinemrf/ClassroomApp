@@ -1,0 +1,101 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "My Profile";
+    var initials = FileHelper.GetInitials(Model.FirstName, Model.LastName);
+}
+<div class="container-fluid">
+    <h4 class="mb-4"><i class="fas fa-user me-2"></i>My Profile</h4>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm text-center">
+                <div class="card-body py-5">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePicturePath))
+                    {
+                        <img src="@Model.ProfilePicturePath" alt="Profile" class="avatar-xl rounded-circle mb-3" />
+                    }
+                    else
+                    {
+                        <div class="avatar-xl avatar-initials mx-auto mb-3">@initials</div>
+                    }
+                    <h5 class="fw-bold">@Model.FirstName @Model.LastName</h5>
+                    <span class="badge bg-primary-subtle text-primary">@Model.Role</span>
+                    <p class="text-muted small mt-2">@Model.Email</p>
+                    <hr />
+                    <form asp-action="UploadProfilePicture" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <input type="file" name="profilePicture" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" />
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-camera me-1"></i>Update Photo</button>
+                    </form>
+                </div>
+            </div>
+            @if (Model.Role == Role.Teacher)
+            {
+                <div class="card shadow-sm mt-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3">Stats</h6>
+                        <div class="d-flex justify-content-between mb-2"><span>Classrooms</span><strong>@Model.TotalClassrooms</strong></div>
+                        <div class="d-flex justify-content-between mb-2"><span>Courses</span><strong>@Model.TotalCourses</strong></div>
+                        <div class="d-flex justify-content-between"><span>Assignments</span><strong>@Model.TotalAssignments</strong></div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Edit Information</h6></div>
+                <div class="card-body">
+                    <form asp-action="Profile" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input asp-for="FirstName" class="form-control" />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <input asp-for="LastName" class="form-control" />
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" value="@Model.Email" disabled />
+                        </div>
+                        @if (Model.Role == Role.Teacher)
+                        {
+                            <div class="mb-3">
+                                <label asp-for="Department" class="form-label">Department</label>
+                                <input asp-for="Department" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                                <label asp-for="Bio" class="form-label">Bio</label>
+                                <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
+                            </div>
+                        }
+                        @if (Model.Role == Role.Student)
+                        {
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Student Number</label>
+                                    <input class="form-control" value="@Model.StudentNumber" disabled />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Classroom</label>
+                                    <input class="form-control" value="@Model.ClassroomName" disabled />
+                                </div>
+                            </div>
+                        }
+                        <div class="mb-3">
+                            <label class="form-label">Member Since</label>
+                            <input class="form-control" value="@Model.CreatedAt.ToString("MMMM dd, yyyy")" disabled />
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

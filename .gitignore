@@ -1,0 +1,34 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+_ReSharper*/
+*.DotSettings.user
+
+## Publish / deploy
+publish/
+*.pubxml
+*.pubxml.user
+
+## Runtime / secrets
+appsettings.Development.json
+appsettings.Secrets.json
+*.pfx
+*.p12
+
+## Uploads (user-generated content, do not commit)
+wwwroot/uploads/
+
+## Logs
+logs/
+*.log
+Serilog/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Migrations (keep in source control - remove this if you want)
+# Migrations/

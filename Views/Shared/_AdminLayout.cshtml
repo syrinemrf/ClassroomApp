@@ -1,0 +1,125 @@
+﻿@using System.Security.Claims
+@{
+    var firstName = User.FindFirst(ClaimTypes.GivenName)?.Value ?? "";
+    var lastName = User.FindFirst(ClaimTypes.Surname)?.Value ?? "";
+    var profilePic = User.FindFirst("ProfilePicture")?.Value;
+    var initials = (firstName.Length > 0 ? firstName[0].ToString() : "") + (lastName.Length > 0 ? lastName[0].ToString() : "");
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Espace Admin | ITBS Classroom</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="app-body">
+    <aside class="sidebar sidebar-dark" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-logo">
+                <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+                    <rect width="36" height="36" rx="10" fill="white" fill-opacity="0.15"/>
+                    <path d="M18 8L28 13V19C28 24.5 23.5 29.5 18 31C12.5 29.5 8 24.5 8 19V13L18 8Z" fill="white" fill-opacity="0.9"/>
+                    <path d="M15 18.5L17 20.5L21 16.5" stroke="#4338CA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div>
+                <div class="sidebar-brand-name">ITBS Classroom</div>
+                <div class="sidebar-space-label">Espace Admin</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="@Url.Action("Dashboard", "Admin")" class="sidebar-link @(controller == "Admin" && action == "Dashboard" ? "active" : "")">
+                <i class="fas fa-tachometer-alt"></i><span>Tableau de bord</span>
+            </a>
+            <div class="sidebar-section-label">Utilisateurs</div>
+            <a href="@Url.Action("Teachers", "Admin")" class="sidebar-link @(controller == "Admin" && (action is "Teachers" or "CreateTeacher") ? "active" : "")">
+                <i class="fas fa-chalkboard-teacher"></i><span>Enseignants</span>
+            </a>
+            <a href="@Url.Action("Students", "Admin")" class="sidebar-link @(controller == "Admin" && (action is "Students" or "CreateStudent") ? "active" : "")">
+                <i class="fas fa-user-graduate"></i><span>Étudiants</span>
+            </a>
+            <div class="sidebar-section-label">Pédagogie</div>
+            <a href="@Url.Action("Classrooms", "Admin")" class="sidebar-link @(controller == "Admin" && (action is "Classrooms" or "CreateClassroom" or "EditClassroom") ? "active" : "")">
+                <i class="fas fa-users-rectangle"></i><span>Classes</span>
+            </a>
+            <a href="@Url.Action("Subjects", "Admin")" class="sidebar-link @(controller == "Admin" && (action is "Subjects" or "CreateSubject" or "EditSubject") ? "active" : "")">
+                <i class="fas fa-book-open"></i><span>Matières</span>
+            </a>
+            <div class="sidebar-section-label">Outils</div>
+            <a href="@Url.Action("Index", "Message")" class="sidebar-link @(controller == "Message" ? "active" : "")">
+                <i class="fas fa-envelope"></i><span>Messages</span>
+            </a>
+            <a href="@Url.Action("Index", "Notification")" class="sidebar-link @(controller == "Notification" ? "active" : "")">
+                <i class="fas fa-bell"></i><span>Notifications</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="main-content" id="mainContent">
+        <nav class="top-navbar">
+            <button class="btn btn-link sidebar-toggle" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-link dark-mode-toggle" onclick="toggleDarkMode()" title="Mode sombre">
+                    <i class="fas fa-moon" id="darkModeIcon"></i>
+                </button>
+                <partial name="_Notifications" />
+                <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle user-dropdown" data-bs-toggle="dropdown">
+                        @if (!string.IsNullOrEmpty(profilePic))
+                        {
+                            <img src="@profilePic" alt="Profile" class="avatar-sm" />
+                        }
+                        else
+                        {
+                            <div class="avatar-sm avatar-initials">@initials</div>
+                        }
+                        <span class="d-none d-md-inline ms-1">@firstName @lastName</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item-text"><small class="text-muted fw-semibold">Espace Admin</small></span></li>
+                        <li><hr class="dropdown-divider" /></li>
+                        <li><a class="dropdown-item" href="@Url.Action("EditUser", "Admin", new { id = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value })"><i class="fas fa-user-cog me-2"></i>Mon profil</a></li>
+                        <li>
+                            <form asp-action="Logout" asp-controller="Account" method="post">
+                                @Html.AntiForgeryToken()
+                                <button class="dropdown-item text-danger" type="submit"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="content-wrapper">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    <script>
+        @if (TempData["Success"] != null) { <text>toastr.success('@Html.Raw(TempData["Success"]?.ToString()?.Replace("'", "\\'"))');</text> }
+        @if (TempData["Error"] != null) { <text>toastr.error('@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))');</text> }
+    </script>
+</body>
+</html>

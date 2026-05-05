@@ -1,0 +1,11 @@
+﻿@using System.Security.Claims
+@{
+    var role = User.FindFirst(ClaimTypes.Role)?.Value;
+    Layout = role switch
+    {
+        "Admin" => "_AdminLayout",
+        "Teacher" => "_TeacherLayout",
+        "Student" => "_StudentLayout",
+        _ => "_Layout"
+    };
+}

@@ -1,0 +1,142 @@
+﻿@using ClassroomApp.Models.Entities
+@{
+    ViewData["Title"] = "Tableau de bord";
+    var teacherName = ViewBag.TeacherName as string;
+    var profilePic = ViewBag.ProfilePicture as string;
+    int classroomCount = ViewBag.ClassroomCount;
+    int courseCount = ViewBag.CourseCount;
+    int assignmentCount = ViewBag.AssignmentCount;
+    int pendingGrades = ViewBag.PendingGrades;
+    var upcomingDeadlines = ViewBag.UpcomingDeadlines as List<Assignment>;
+    var recentAssignments = ViewBag.RecentAssignments as List<Assignment>;
+}
+<div class="container-fluid">
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden" style="background: linear-gradient(135deg, #4F46E5, #7c3aed);">
+        <div class="card-body d-flex align-items-center gap-4 py-4 px-4">
+            @if (!string.IsNullOrEmpty(profilePic))
+            {
+                <img src="@profilePic" class="avatar-lg rounded-circle border border-white border-3" style="border-width:3px!important" />
+            }
+            else
+            {
+                <div class="avatar-lg avatar-initials border-3" style="background:rgba(255,255,255,0.2);color:white;font-size:1.5rem;border:3px solid rgba(255,255,255,0.4)">@(teacherName?[0])</div>
+            }
+            <div>
+                <h4 class="fw-bold mb-1 text-white">Bienvenue, @teacherName !</h4>
+                <p class="mb-0 text-white" style="opacity:0.85">Voici votre tableau de bord pedagogique.</p>
+            </div>
+            <div class="ms-auto">
+                <a href="@Url.Action("Index", "Subject")" class="btn btn-light fw-semibold">
+                    <i class="fas fa-th-large me-2"></i>Mes matieres
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-primary-subtle text-primary"><i class="fas fa-school"></i></div>
+                    <div><p class="text-muted small mb-0">Classes</p><h3 class="fw-bold mb-0">@classroomCount</h3></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-info-subtle text-info"><i class="fas fa-book"></i></div>
+                    <div><p class="text-muted small mb-0">Cours</p><h3 class="fw-bold mb-0">@courseCount</h3></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-warning-subtle text-warning"><i class="fas fa-file-alt"></i></div>
+                    <div><p class="text-muted small mb-0">Devoirs</p><h3 class="fw-bold mb-0">@assignmentCount</h3></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-danger-subtle text-danger"><i class="fas fa-clipboard-check"></i></div>
+                    <div><p class="text-muted small mb-0">A noter</p><h3 class="fw-bold mb-0 @(pendingGrades > 0 ? "text-danger" : "")">@pendingGrades</h3></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 pb-0 pt-3 px-4">
+                    <h6 class="fw-bold mb-0">Echeances a venir <span class="badge bg-danger-subtle text-danger ms-1">7 jours</span></h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (upcomingDeadlines?.Any() == true)
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var a in upcomingDeadlines)
+                            {
+                                <a href="@Url.Action("Details", "Assignment", new { id = a.Id })" class="list-group-item list-group-item-action px-4 py-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <p class="mb-0 fw-semibold text-truncate" style="max-width:240px">@a.Title</p>
+                                            <small class="text-muted">@a.Classroom?.Name</small>
+                                        </div>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis ms-2 flex-shrink-0">
+                                            @a.Deadline.ToString("dd MMM HH:mm")
+                                        </span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                            <p class="mb-0">Aucune echeance dans les 7 prochains jours</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white border-0 pb-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Derniers devoirs crees</h6>
+                    <a href="@Url.Action("Index", "Assignment")" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    @if (recentAssignments?.Any() == true)
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var a in recentAssignments)
+                            {
+                                <a href="@Url.Action("Details", "Assignment", new { id = a.Id })" class="list-group-item list-group-item-action px-4 py-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <p class="mb-0 fw-semibold">@a.Title</p>
+                                            <small class="text-muted">@a.Classroom?.Name &middot; /100</small>
+                                        </div>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis ms-2">@a.Deadline.ToString("dd MMM")</span>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-file-alt fa-2x mb-2"></i>
+                            <p class="mb-0">Aucun devoir recent</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,90 @@
+﻿@model ClassroomApp.Models.ViewModels.Assignment.CreateAssignmentViewModel
+@{
+    ViewData["Title"] = ViewBag.AssignmentId != null ? "Modifier le devoir" : "Creer un devoir";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    var assignmentId = ViewBag.AssignmentId as Guid?;
+}
+
+<div class="container-fluid">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a onclick="history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h4 class="mb-0">
+            <i class="fas @(assignmentId != null ? "fa-edit" : "fa-plus") me-2"></i>@ViewData["Title"]
+        </h4>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="@(assignmentId != null ? "Edit" : "Create")" asp-route-id="@assignmentId" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label asp-for="SubjectId" class="form-label fw-semibold">Matiere</label>
+                            <select asp-for="SubjectId" class="form-select">
+                                <option value="">-- Toutes matieres --</option>
+                                @if (Model.AvailableSubjects != null)
+                                {
+                                    @foreach (var s in Model.AvailableSubjects)
+                                    {
+                                        @if (Model.SubjectId == s.Key) { <option value="@s.Key" selected>@s.Value</option> } else { <option value="@s.Key">@s.Value</option> }
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Titre du devoir..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Consignes <span class="text-danger">*</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="5"
+                                      placeholder="Decrivez le travail a realiser..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row mb-4 g-3">
+                            <div class="col-md-4">
+                                <label asp-for="ClassroomId" class="form-label fw-semibold">Classe <span class="text-danger">*</span></label>
+                                <select asp-for="ClassroomId" class="form-select">
+                                    <option value="">Selectionner...</option>
+                                    @if (Model.AvailableClassrooms != null)
+                                    {
+                                        @foreach (var c in Model.AvailableClassrooms)
+                                        {
+                                            <option value="@c.Key">@c.Value</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="ClassroomId" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Deadline" class="form-label fw-semibold">Echeance <span class="text-danger">*</span></label>
+                                <input asp-for="Deadline" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="Deadline" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="MaxScore" class="form-label fw-semibold">Note max <span class="text-danger">*</span></label>
+                                <input asp-for="MaxScore" class="form-control" type="number" min="1" max="1000" />
+                                <span asp-validation-for="MaxScore" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>@(assignmentId != null ? "Modifier" : "Creer")
+                            </button>
+                            <a onclick="history.back()" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
