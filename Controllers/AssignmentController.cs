@@ -426,6 +426,7 @@ namespace ClassroomApp.Controllers
                     var sub = assignment.Submissions.FirstOrDefault(s => s.StudentId == student.Id);
                     return new SubmissionDetailItem
                     {
+                        StudentId = student.Id,
                         SubmissionId = sub?.Id ?? Guid.Empty,
                         StudentName = student.User.FirstName + " " + student.User.LastName,
                         StudentNumber = student.StudentNumber,

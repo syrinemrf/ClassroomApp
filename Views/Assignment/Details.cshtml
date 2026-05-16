@@ -36,10 +36,10 @@
     </div>
 
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Student Submissions</h6></div>
+        <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Remises des étudiants</h6></div>
         <div class="card-body">
             <table class="table table-hover" id="submissionsTable">
-                <thead><tr><th>Student</th><th>Student #</th><th>Status</th><th>Submitted</th><th>Score</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Etudiant</th><th># Étudiant</th><th>Statut</th><th>Remis</th><th>Note</th><th>Actions</th></tr></thead>
                 <tbody>
                     @foreach (var s in Model.Submissions)
                     {
@@ -48,29 +48,38 @@
                             SubmissionStatus.Graded => "bg-success",
                             SubmissionStatus.Submitted => "bg-primary",
                             SubmissionStatus.Late => "bg-warning text-dark",
+                            SubmissionStatus.Pending => "bg-danger",
                             _ => "bg-secondary"
+                        };
+                        var statusText = s.Status switch
+                        {
+                            SubmissionStatus.Graded => "Noté",
+                            SubmissionStatus.Submitted => "Remis",
+                            SubmissionStatus.Late => "Remis tard",
+                            SubmissionStatus.Pending => "Non remis",
+                            _ => "En attente"
                         };
                         <tr>
                             <td>@s.StudentName</td>
                             <td><code>@s.StudentNumber</code></td>
-                            <td><span class="badge @statusClass">@s.Status</span></td>
-                            <td>@(s.SubmittedAt?.ToString("MMM dd HH:mm") ?? "�")</td>
-                            <td>@(s.Score.HasValue ? $"{s.Score}/{s.MaxScore}" : "�")</td>
+                            <td><span class="badge @statusClass">@statusText</span></td>
+                            <td>@(s.SubmittedAt?.ToString("dd MMM HH:mm") ?? "—")</td>
+                            <td>@(s.Score.HasValue ? $"{s.Score}/{s.MaxScore}" : "—")</td>
                             <td>
-                                @if (s.SubmissionId != Guid.Empty)
-                                {
-                                    <div class="d-flex gap-1">
-                                        <a href="@Url.Action("Grade", "Submission", new { id = s.SubmissionId })" class="btn btn-sm btn-outline-primary"><i class="fas fa-pen"></i> Grade</a>
+                                <div class="d-flex gap-1">
+                                    @if (s.SubmissionId != Guid.Empty)
+                                    {
+                                        <a href="@Url.Action("Grade", "Submission", new { id = s.SubmissionId })" class="btn btn-sm btn-outline-primary" title="Noter cette remise"><i class="fas fa-pen"></i> Noter</a>
                                         @if (!string.IsNullOrEmpty(s.FileName))
                                         {
-                                            <a href="@Url.Action("Download", "Submission", new { id = s.SubmissionId })" class="btn btn-sm btn-outline-info"><i class="fas fa-download"></i></a>
+                                            <a href="@Url.Action("Download", "Submission", new { id = s.SubmissionId })" class="btn btn-sm btn-outline-info" title="Télécharger le fichier"><i class="fas fa-download"></i></a>
                                         }
-                                    </div>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">Not submitted</span>
-                                }
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Action("GradeStudent", "Submission", new { assignmentId = Model.Id, studentId = s.StudentId })" class="btn btn-sm btn-outline-danger" title="Noter cet étudiant sans remise"><i class="fas fa-pen"></i> Noter</a>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

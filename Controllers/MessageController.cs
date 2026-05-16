@@ -130,7 +130,7 @@ namespace ClassroomApp.Controllers
         {
             if (string.IsNullOrWhiteSpace(content))
             {
-                TempData["Error"] = "Message cannot be empty.";
+                TempData["Error"] = "Le message ne peut pas être vide.";
                 return RedirectToAction(nameof(Index), new { userId = receiverId });
             }
 

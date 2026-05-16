@@ -43,7 +43,7 @@ namespace ClassroomApp.Controllers
             var principal = await _authService.ValidateLoginAsync(model.Email, model.Password);
             if (principal == null)
             {
-                TempData["Error"] = "Invalid email or password.";
+                TempData["Error"] = "Email ou mot de passe invalide.";
                 return View(model);
             }
 
@@ -116,9 +116,9 @@ namespace ClassroomApp.Controllers
             var result = await _authService.UpdateProfileAsync(userId, model.FirstName, model.LastName, model.Department, model.Bio);
 
             if (result)
-                TempData["Success"] = "Profile updated successfully.";
+                TempData["Success"] = "Profil mis à jour avec succès.";
             else
-                TempData["Error"] = "Failed to update profile.";
+                TempData["Error"] = "Impossible de mettre à jour le profil.";
 
             return RedirectToAction(nameof(Profile));
         }
@@ -170,7 +170,7 @@ namespace ClassroomApp.Controllers
                     ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
                 });
 
-            TempData["Success"] = "Profile picture updated successfully.";
+            TempData["Success"] = "Photo de profil mise à jour avec succès.";
             return RedirectToAction(nameof(Profile));
         }
 

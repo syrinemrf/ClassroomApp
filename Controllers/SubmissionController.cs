@@ -58,13 +58,13 @@ namespace ClassroomApp.Controllers
 
             if (file == null || file.Length == 0)
             {
-                TempData["Error"] = "Please select a file.";
+                TempData["Error"] = "Veuillez sélectionner un fichier.";
                 return RedirectToAction(nameof(Submit), new { assignmentId });
             }
 
             if (!_fileService.IsAllowedSubmissionFile(file))
             {
-                TempData["Error"] = "Invalid file type or size (max 20MB).";
+                TempData["Error"] = "Type ou taille de fichier invalide (maximum 20MB).";
                 return RedirectToAction(nameof(Submit), new { assignmentId });
             }
 
@@ -73,7 +73,7 @@ namespace ClassroomApp.Controllers
 
             if (existingSubmission != null)
             {
-                TempData["Error"] = "You have already submitted for this assignment.";
+                TempData["Error"] = "Vous avez déjà remis un devoir pour cet assignement.";
                 return RedirectToAction(nameof(Submit), new { assignmentId });
             }
 
@@ -97,8 +97,8 @@ namespace ClassroomApp.Controllers
             await _context.SaveChangesAsync();
 
             TempData["Success"] = isLate
-                ? "Submission uploaded (marked as late)."
-                : "Submission uploaded successfully.";
+                ? "Remise chargée (marquée comme tard)."
+                : "Remise chargée avec succès.";
 
             return RedirectToAction("MyAssignments", "Assignment");
         }
@@ -146,6 +146,55 @@ namespace ClassroomApp.Controllers
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize)
             };
             return View(vm);
+        }
+
+        [RoleAuthorize("Teacher")]
+        [HttpGet]
+        public async Task<IActionResult> GradeStudent(Guid assignmentId, Guid studentId)
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+            if (teacher == null) return Forbid();
+
+            var assignment = await _context.Assignments.FirstOrDefaultAsync(a => a.Id == assignmentId && a.TeacherId == teacher.Id);
+            if (assignment == null) return NotFound();
+
+            var student = await _context.Students
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.Id == studentId);
+            if (student == null) return NotFound();
+
+            var submission = await _context.Submissions
+                .FirstOrDefaultAsync(s => s.StudentId == studentId && s.AssignmentId == assignmentId);
+
+            if (submission == null)
+            {
+                submission = new Submission
+                {
+                    Id = Guid.NewGuid(),
+                    StudentId = studentId,
+                    AssignmentId = assignmentId,
+                    Status = SubmissionStatus.Pending,
+                    SubmittedAt = DateTime.UtcNow
+                };
+                _context.Submissions.Add(submission);
+                await _context.SaveChangesAsync();
+            }
+
+            var vm = new GradeSubmissionViewModel
+            {
+                SubmissionId = submission.Id,
+                StudentName = $"{student.User.FirstName} {student.User.LastName}",
+                StudentNumber = student.StudentNumber,
+                AssignmentTitle = assignment.Title,
+                MaxScore = assignment.MaxScore,
+                FileName = submission.FileName ?? "(Pas de remise)",
+                SubmittedAt = submission.SubmittedAt,
+                Status = submission.Status.ToString(),
+                Score = submission.Score ?? 0,
+                TeacherComment = submission.TeacherComment
+            };
+            return View("Grade", vm);
         }
 
         [RoleAuthorize("Teacher")]
@@ -214,7 +263,7 @@ namespace ClassroomApp.Controllers
                 "Assignment"
             );
 
-            TempData["Success"] = "Submission graded successfully.";
+            TempData["Success"] = "Devoir noté avec succès.";
             return RedirectToAction("Details", "Assignment", new { id = submission.AssignmentId });
         }
 

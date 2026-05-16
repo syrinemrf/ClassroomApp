@@ -27,7 +27,7 @@ namespace ClassroomApp.Controllers
         {
             if (string.IsNullOrWhiteSpace(content))
             {
-                TempData["Error"] = "Comment cannot be empty.";
+                TempData["Error"] = "Le commentaire ne peut pas être vide.";
                 return RedirectBack(assignmentId);
             }
 
@@ -45,7 +45,7 @@ namespace ClassroomApp.Controllers
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Comment posted.";
+            TempData["Success"] = "Commentaire posté.";
             return RedirectBack(assignmentId);
         }
 
@@ -55,7 +55,7 @@ namespace ClassroomApp.Controllers
         {
             if (string.IsNullOrWhiteSpace(content))
             {
-                TempData["Error"] = "Reply cannot be empty.";
+                TempData["Error"] = "La réponse ne peut pas être vide.";
                 return Redirect(Request.Headers.Referer.ToString());
             }
 
@@ -91,7 +91,7 @@ namespace ClassroomApp.Controllers
                 );
             }
 
-            TempData["Success"] = "Reply posted.";
+            TempData["Success"] = "Réponse postée.";
             return RedirectBack(parent.AssignmentId);
         }
 
@@ -104,7 +104,7 @@ namespace ClassroomApp.Controllers
 
             if (comment == null)
             {
-                TempData["Error"] = "Comment not found or you don't have permission.";
+                TempData["Error"] = "Commentaire introuvable ou vous n'avez pas la permission.";
                 return Redirect(Request.Headers.Referer.ToString());
             }
 
@@ -112,7 +112,7 @@ namespace ClassroomApp.Controllers
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Comment deleted.";
+            TempData["Success"] = "Commentaire supprimé.";
             return RedirectBack(assignmentId);
         }
 

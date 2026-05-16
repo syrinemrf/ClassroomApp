@@ -87,5 +87,26 @@ namespace ClassroomApp.Controllers
                 n.RelatedEntityType
             }));
         }
+
+        [HttpGet]
+        public IActionResult GetRedirectUrl(Guid notificationId, Guid relatedEntityId, string relatedEntityType)
+        {
+            var redirectUrl = "#";
+            
+            if (string.IsNullOrEmpty(relatedEntityType)) 
+                return Json(new { url = redirectUrl });
+
+            redirectUrl = relatedEntityType switch
+            {
+                "Assignment" => Url.Action("Details", "Assignment", new { id = relatedEntityId }),
+                "Course" => Url.Action("Details", "Course", new { id = relatedEntityId }),
+                "Message" => Url.Action("Index", "Message"),
+                "Comment" => Url.Action("Details", "Assignment", new { id = relatedEntityId }),
+                "Submission" => Url.Action("Details", "Assignment", new { id = relatedEntityId }),
+                _ => "#"
+            };
+
+            return Json(new { url = redirectUrl });
+        }
     }
 }

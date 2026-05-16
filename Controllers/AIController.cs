@@ -29,7 +29,7 @@ namespace ClassroomApp.Controllers
         public async Task<IActionResult> Ask([FromBody] AskRequest request)
         {
             if (string.IsNullOrWhiteSpace(request?.Question))
-                return Json(new { error = "Please enter a question." });
+                return Json(new { error = "Veuillez entrer une question." });
 
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var student = await _context.Students

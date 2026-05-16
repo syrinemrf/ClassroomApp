@@ -47,6 +47,7 @@ namespace ClassroomApp.Models.ViewModels.Assignment
 
     public class SubmissionDetailItem
     {
+        public Guid StudentId { get; set; }
         public Guid SubmissionId { get; set; }
         public string StudentName { get; set; } = string.Empty;
         public string StudentNumber { get; set; } = string.Empty;

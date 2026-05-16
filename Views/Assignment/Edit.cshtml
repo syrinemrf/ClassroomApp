@@ -1,55 +1,103 @@
 @model CreateAssignmentViewModel
 @{
-    ViewData["Title"] = "Edit Assignment";
+    ViewData["Title"] = "Modifier le devoir";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
     var assignmentId = ViewBag.AssignmentId as Guid?;
 }
+
 <div class="container-fluid">
-    <h4 class="mb-4"><i class="fas fa-edit me-2"></i>Edit Assignment</h4>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <form asp-action="Edit" asp-route-id="@assignmentId" method="post">
-                @Html.AntiForgeryToken()
-                <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Title</label>
-                    <input asp-for="Title" class="form-control" />
-                    <span asp-validation-for="Title" class="text-danger small"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Description</label>
-                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
-                    <span asp-validation-for="Description" class="text-danger small"></span>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label asp-for="Deadline" class="form-label">Deadline</label>
-                        <input asp-for="Deadline" type="datetime-local" class="form-control" />
-                        <span asp-validation-for="Deadline" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-4">
-                        <label asp-for="MaxScore" class="form-label">Max Score</label>
-                        <input asp-for="MaxScore" class="form-control" type="number" min="1" />
-                        <span asp-validation-for="MaxScore" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-4">
-                        <label asp-for="ClassroomId" class="form-label">Classroom</label>
-                        <select asp-for="ClassroomId" class="form-select">
-                            <option value="">Select classroom...</option>
-                            @if (Model.AvailableClassrooms != null)
-                            {
-                                @foreach (var c in Model.AvailableClassrooms)
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a onclick="history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h4 class="mb-0">
+            <i class="fas fa-edit me-2"></i>Modifier le devoir
+        </h4>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form asp-action="Edit" asp-route-id="@assignmentId" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label asp-for="SubjectId" class="form-label fw-semibold">Matière</label>
+                            <select asp-for="SubjectId" class="form-select">
+                                <option value="">-- Toutes matières --</option>
+                                @if (Model.AvailableSubjects != null)
                                 {
-                                    <option value="@c.Key">@c.Value</option>
+                                    @foreach (var s in Model.AvailableSubjects)
+                                    {
+                                        @if (Model.SubjectId == s.Key) { <option value="@s.Key" selected>@s.Value</option> } else { <option value="@s.Key">@s.Value</option> }
+                                    }
                                 }
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Titre du devoir..." />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold">Consignes <span class="text-danger">*</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="5"
+                                      placeholder="Décrivez le travail à réaliser..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row mb-4 g-3">
+                            <div class="col-md-4">
+                                <label asp-for="ClassroomId" class="form-label fw-semibold">Classe <span class="text-danger">*</span></label>
+                                <select asp-for="ClassroomId" asp-items="@(new SelectList(Model.AvailableClassrooms, "Key", "Value"))" class="form-select">
+                                    <option value="">Sélectionner...</option>
+                                </select>
+                                <span asp-validation-for="ClassroomId" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Deadline" class="form-label fw-semibold">Échéance <span class="text-danger">*</span></label>
+                                <input asp-for="Deadline" type="datetime-local" class="form-control" />
+                                <span asp-validation-for="Deadline" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="MaxScore" class="form-label fw-semibold">Note max <span class="text-danger">*</span></label>
+                                <input asp-for="MaxScore" class="form-control" type="number" min="1" max="1000" />
+                                <span asp-validation-for="MaxScore" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">
+                                Fichier joint <span class="text-muted small">(optionnel – PDF, DOCX, PPTX, ZIP, images – max 50 MB)</span>
+                            </label>
+                            @if (!string.IsNullOrEmpty(Model.ExistingFileName))
+                            {
+                                <div class="alert alert-info py-2 mb-2">
+                                    <i class="fas fa-paperclip me-2"></i>Fichier actuel&nbsp;: <strong>@Model.ExistingFileName</strong>
+                                    <span class="text-muted ms-2 small">(laisser vide pour conserver ce fichier)</span>
+                                </div>
                             }
-                        </select>
-                        <span asp-validation-for="ClassroomId" class="text-danger small"></span>
-                    </div>
+                            <div class="file-upload-zone p-3 text-center" onclick="document.getElementById('attachmentInput').click()" style="cursor:pointer;border:2px dashed #cbd5e1;border-radius:8px;">
+                                <i class="fas fa-paperclip fa-lg text-muted mb-1"></i>
+                                <div class="text-muted small">Cliquez pour joindre un fichier</div>
+                                <div id="attachmentName" class="text-primary fw-semibold mt-1 small"></div>
+                            </div>
+                            <input asp-for="AttachmentFile" type="file" id="attachmentInput" class="d-none"
+                                   accept=".pdf,.docx,.pptx,.zip,.jpg,.jpeg,.png,.webp"
+                                   onchange="document.getElementById('attachmentName').textContent = this.files[0]?.name ?? ''" />
+                            <span asp-validation-for="AttachmentFile" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Enregistrer les modifications</button>
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </form>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
-                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">Cancel</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

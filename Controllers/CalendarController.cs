@@ -64,11 +64,12 @@ namespace ClassroomApp.Controllers
 
             // Assignment deadlines
             var assignments = await _context.Assignments
+                .Include(a => a.Subject)
                 .Where(a => classroomIds.Contains(a.ClassroomId))
                 .Select(a => new CalendarEventViewModel
                 {
                     Id = a.Id,
-                    Title = $"\U0001F4DA {a.Title}",
+                    Title = $"\U0001F4DA {(a.Subject != null ? $"[{a.Subject.Name}] " : "")}{a.Title}",
                     Description = $"Date limite du devoir - Note max : {a.MaxScore}",
                     Start = a.Deadline.AddHours(-1),
                     End = a.Deadline,
