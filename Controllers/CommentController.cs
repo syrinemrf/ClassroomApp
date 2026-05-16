@@ -83,8 +83,8 @@ namespace ClassroomApp.Controllers
                 var replierName = $"{User.FindFirst(ClaimTypes.GivenName)?.Value} {User.FindFirst(ClaimTypes.Surname)?.Value}";
                 await _notificationService.CreateNotificationAsync(
                     parent.UserId,
-                    "?? New Reply",
-                    $"{replierName} replied to your comment.",
+                    "Nouvelle réponse",
+                    $"{replierName} a répondu à votre commentaire.",
                     NotificationType.NewComment,
                     parent.AssignmentId,
                     "Assignment"

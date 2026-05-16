@@ -58,7 +58,9 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IGeminiService, GeminiService>();
 builder.Services.AddScoped<DeadlineReminderJob>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 
 builder.Services.AddControllersWithViews();
 

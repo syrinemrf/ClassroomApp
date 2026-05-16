@@ -151,8 +151,8 @@ namespace ClassroomApp.Controllers
 
             await _notificationService.CreateNotificationAsync(
                 receiverId,
-                "?? New Message",
-                $"{senderName} sent you a message.",
+                "Nouveau message",
+                $"{senderName} vous a envoyé un message.",
                 NotificationType.NewMessage
             );
 

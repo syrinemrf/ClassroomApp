@@ -1,0 +1,212 @@
+@{
+    ViewData["Title"] = "Chatbot IA";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg" style="border-radius: 12px; overflow: hidden;">
+                <!-- Header -->
+                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                    <h2 class="mb-1" style="display: flex; align-items: center;">
+                        <i class="fas fa-robot me-3" style="font-size: 1.8rem;"></i>
+                        Assistant IA - ClassroomApp
+                    </h2>
+                    <p class="mb-0 small">Posez vos questions académiques</p>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="card-body" id="chatContainer" style="height: 500px; overflow-y: auto; background-color: #f8f9fa;">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-comments fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>Posez une question pour commencer...</p>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="card-footer" style="background-color: #fff; border-top: 1px solid #e0e0e0;">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="questionInput" placeholder="Votre question..." 
+                               style="border-radius: 8px 0 0 8px; padding: 12px 15px; font-size: 0.95rem;"
+                               onkeypress="if(event.key==='Enter') sendQuestion()">
+                        <button class="btn btn-primary" id="sendBtn" onclick="sendQuestion()" 
+                                style="border-radius: 0 8px 8px 0; padding: 12px 20px;">
+                            <i class="fas fa-paper-plane"></i> Envoyer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-message {
+        margin: 12px 0;
+        display: flex;
+        animation: slideIn 0.3s ease-in-out;
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-message {
+        justify-content: flex-end;
+    }
+
+    .user-message .message-text {
+        background-color: #667eea;
+        color: white;
+        padding: 12px 15px;
+        border-radius: 12px 12px 0 12px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .ai-message .message-text {
+        background-color: #e8eaf6;
+        color: #333;
+        padding: 12px 15px;
+        border-radius: 12px 12px 12px 0;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .loading-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-style: italic;
+    }
+
+    .loading-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #667eea;
+        animation: bounce 1.4s infinite;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @@keyframes bounce {
+        0%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+    }
+</style>
+
+<script>
+    let isLoading = false;
+
+    async function sendQuestion() {
+        const input = document.getElementById('questionInput');
+        const question = input.value.trim();
+
+        if (!question || isLoading) return;
+
+        isLoading = true;
+        document.getElementById('sendBtn').disabled = true;
+
+        // Add user message to chat
+        addMessage(question, 'user');
+        input.value = '';
+
+        // Show loading indicator
+        const loadingId = showLoadingIndicator();
+
+        try {
+            const response = await fetch('@Url.Action("AskQuestion", "Chatbot")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ question })
+            });
+
+            const data = await response.json();
+            removeLoadingIndicator(loadingId);
+
+            if (data.error) {
+                addMessage(`Erreur: ${data.error}`, 'ai');
+            } else {
+                addMessage(data.response, 'ai');
+            }
+        } catch (error) {
+            removeLoadingIndicator(loadingId);
+            addMessage(`Erreur de connexion: ${error.message}`, 'ai');
+        } finally {
+            isLoading = false;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('questionInput').focus();
+        }
+    }
+
+    function addMessage(text, sender) {
+        const container = document.getElementById('chatContainer');
+        
+        // Clear initial message if exists
+        if (container.querySelector('.text-center')) {
+            container.innerHTML = '';
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${sender}-message`;
+        messageDiv.innerHTML = `<div class="message-text">${escapeHtml(text)}</div>`;
+        
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function showLoadingIndicator() {
+        const container = document.getElementById('chatContainer');
+        const id = 'loading-' + Date.now();
+        
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = id;
+        loadingDiv.className = 'chat-message ai-message';
+        loadingDiv.innerHTML = `
+            <div class="message-text">
+                <div class="loading-indicator">
+                    <span>L'IA réfléchit</span>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(loadingDiv);
+        container.scrollTop = container.scrollHeight;
+        
+        return id;
+    }
+
+    function removeLoadingIndicator(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.remove();
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Focus input on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('questionInput').focus();
+    });
+</script>
