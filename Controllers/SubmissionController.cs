@@ -207,8 +207,8 @@ namespace ClassroomApp.Controllers
 
             await _notificationService.CreateNotificationAsync(
                 submission.Student.UserId,
-                "? New Grade",
-                $"Your submission for '{submission.Assignment.Title}' has been graded: {model.Score}/{submission.Assignment.MaxScore}",
+                "Nouvelle note !",
+                $"Votre devoir '{submission.Assignment.Title}' a ete note : {model.Score}/{submission.Assignment.MaxScore}",
                 NotificationType.NewGrade,
                 submission.AssignmentId,
                 "Assignment"

@@ -8,7 +8,15 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
+LoadDotEnv();
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Kestrel: allow large file uploads (50 MB)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 52_428_800;
+});
 
 // Serilog
 builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
@@ -43,6 +51,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<DeadlineReminderJob>();
 
 builder.Services.AddControllersWithViews();
@@ -91,6 +100,43 @@ app.MapControllerRoute(
     pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();
+
+static void LoadDotEnv()
+{
+    var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+    if (!File.Exists(envPath))
+    {
+        return;
+    }
+
+    foreach (var rawLine in File.ReadAllLines(envPath))
+    {
+        var line = rawLine.Trim();
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+        {
+            continue;
+        }
+
+        var separatorIndex = line.IndexOf('=');
+        if (separatorIndex <= 0)
+        {
+            continue;
+        }
+
+        var key = line[..separatorIndex].Trim();
+        var value = line[(separatorIndex + 1)..].Trim();
+
+        if (value.Length >= 2 && value.StartsWith('"') && value.EndsWith('"'))
+        {
+            value = value[1..^1];
+        }
+
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(key)))
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}
 
 // Hangfire auth filter
 public class HangfireAuthFilter : IDashboardAuthorizationFilter

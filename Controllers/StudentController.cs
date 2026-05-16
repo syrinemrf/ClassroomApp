@@ -56,7 +56,8 @@ namespace ClassroomApp.Controllers
                     a.Deadline,
                     a.Id,
                     IsSubmitted = submittedIds.Contains(a.Id),
-                    HoursLeft = (a.Deadline - now).TotalHours
+                    HoursLeft = (a.Deadline - now).TotalHours,
+                    ClassroomName = student.Classroom.Name
                 })
                 .ToList();
 

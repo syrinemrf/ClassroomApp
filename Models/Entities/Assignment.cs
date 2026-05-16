@@ -13,6 +13,12 @@ namespace ClassroomApp.Models.Entities
         public Guid ClassroomId { get; set; }
         public Guid? SubjectId { get; set; }
 
+        // Optional attached file
+        public string? FilePath { get; set; }
+        public string? FileName { get; set; }
+        public long? FileSize { get; set; }
+        public string? ContentType { get; set; }
+
         // Navigation
         public Teacher Teacher { get; set; } = null!;
         public Classroom Classroom { get; set; } = null!;

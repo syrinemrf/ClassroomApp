@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ClassroomApp.Models.ViewModels.Assignment
 {
@@ -23,6 +24,12 @@ namespace ClassroomApp.Models.ViewModels.Assignment
         public Guid ClassroomId { get; set; }
 
         public Guid? SubjectId { get; set; }
+
+        /// <summary>Optional file attachment (PDF, DOCX, PPTX, ZIP, images – max 50 MB).</summary>
+        public IFormFile? AttachmentFile { get; set; }
+
+        /// <summary>Displayed when editing an assignment that already has a file.</summary>
+        public string? ExistingFileName { get; set; }
 
         public Dictionary<Guid, string>? AvailableClassrooms { get; set; }
         public Dictionary<Guid, string>? AvailableSubjects { get; set; }

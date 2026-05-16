@@ -141,8 +141,34 @@ namespace ClassroomApp.Controllers
             }
 
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            // Delete the old profile picture file if it exists
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null && !string.IsNullOrEmpty(user.ProfilePicturePath))
+                _fileService.DeleteFile(user.ProfilePicturePath);
+
             var path = await _fileService.SaveFileAsync(profilePicture, "profiles");
             await _authService.UploadProfilePictureAsync(userId, path);
+
+            // Refresh the auth cookie so the ProfilePicture claim reflects the new picture
+            // (layouts read the claim to render the avatar in the navbar)
+            var claims = User.Claims
+                .Where(c => c.Type != "ProfilePicture")
+                .Append(new System.Security.Claims.Claim("ProfilePicture", path))
+                .ToList();
+
+            var identity = new System.Security.Claims.ClaimsIdentity(
+                claims,
+                Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme,
+                new System.Security.Claims.ClaimsPrincipal(identity),
+                new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                });
 
             TempData["Success"] = "Profile picture updated successfully.";
             return RedirectToAction(nameof(Profile));

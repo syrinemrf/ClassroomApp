@@ -42,11 +42,19 @@ namespace ClassroomApp.Controllers
                 var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
                 if (teacher != null)
                 {
-                    classroomIds = await _context.CourseClassrooms
+                    var courseClassroomIds = await _context.CourseClassrooms
                         .Where(cc => cc.Course.TeacherId == teacher.Id)
                         .Select(cc => cc.ClassroomId)
                         .Distinct()
                         .ToListAsync();
+
+                    var assignmentClassroomIds = await _context.Assignments
+                        .Where(a => a.TeacherId == teacher.Id)
+                        .Select(a => a.ClassroomId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    classroomIds = courseClassroomIds.Union(assignmentClassroomIds).ToList();
                 }
             }
             else
@@ -60,8 +68,8 @@ namespace ClassroomApp.Controllers
                 .Select(a => new CalendarEventViewModel
                 {
                     Id = a.Id,
-                    Title = $"?? {a.Title}",
-                    Description = $"Assignment deadline - Max score: {a.MaxScore}",
+                    Title = $"\U0001F4DA {a.Title}",
+                    Description = $"Date limite du devoir - Note max : {a.MaxScore}",
                     Start = a.Deadline.AddHours(-1),
                     End = a.Deadline,
                     Color = "#EF4444",

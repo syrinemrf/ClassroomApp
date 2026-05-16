@@ -3,6 +3,7 @@ bin/
 obj/
 *.user
 *.suo
+*.lscache
 .vs/
 _ReSharper*/
 *.DotSettings.user
@@ -13,6 +14,9 @@ publish/
 *.pubxml.user
 
 ## Runtime / secrets
+.env
+.env.*
+!.env.example
 appsettings.Development.json
 appsettings.Secrets.json
 *.pfx

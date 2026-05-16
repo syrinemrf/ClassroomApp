@@ -14,11 +14,19 @@ namespace ClassroomApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly INotificationService _notificationService;
+        private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
 
-        public AssignmentController(AppDbContext context, INotificationService notificationService)
+        public AssignmentController(
+            AppDbContext context,
+            INotificationService notificationService,
+            IFileService fileService,
+            IEmailService emailService)
         {
             _context = context;
             _notificationService = notificationService;
+            _fileService = fileService;
+            _emailService = emailService;
         }
 
         [RoleAuthorize("Teacher")]
@@ -108,10 +116,14 @@ namespace ClassroomApp.Controllers
         [RoleAuthorize("Teacher")]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(52_428_800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52_428_800)]
         public async Task<IActionResult> Create(CreateAssignmentViewModel model)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+            var teacher = await _context.Teachers
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.UserId == userId);
             if (teacher == null) return NotFound();
 
             async Task ReloadDropdowns()
@@ -132,10 +144,39 @@ namespace ClassroomApp.Controllers
                 }
             }
 
+            if (model.AttachmentFile != null && model.AttachmentFile.Length > 0
+                && !_fileService.IsAllowedCourseFile(model.AttachmentFile))
+            {
+                ModelState.AddModelError("AttachmentFile",
+                    "Type ou taille invalide (max 50 MB). Formats : PDF, DOCX, PPTX, ZIP, images.");
+            }
+
             if (!ModelState.IsValid)
             {
                 await ReloadDropdowns();
                 return View(model);
+            }
+
+            string? filePath = null;
+            string? fileName = null;
+            long? fileSize = null;
+            string? contentType = null;
+
+            if (model.AttachmentFile != null && model.AttachmentFile.Length > 0)
+            {
+                try
+                {
+                    filePath = await _fileService.SaveFileAsync(model.AttachmentFile, "assignments");
+                    fileName = model.AttachmentFile.FileName;
+                    fileSize = model.AttachmentFile.Length;
+                    contentType = model.AttachmentFile.ContentType;
+                }
+                catch
+                {
+                    ModelState.AddModelError("AttachmentFile", "Erreur lors de l'enregistrement du fichier.");
+                    await ReloadDropdowns();
+                    return View(model);
+                }
             }
 
             var assignment = new Assignment
@@ -148,22 +189,76 @@ namespace ClassroomApp.Controllers
                 TeacherId = teacher.Id,
                 ClassroomId = model.ClassroomId,
                 SubjectId = model.SubjectId,
+                FilePath = filePath,
+                FileName = fileName,
+                FileSize = fileSize,
+                ContentType = contentType,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Assignments.Add(assignment);
+
+            // Create a calendar event for the deadline
+            var calEvent = new CalendarEvent
+            {
+                Id = Guid.NewGuid(),
+                Title = $"Deadline : {model.Title}",
+                Description = $"Devoir '{model.Title}' — Note max : {model.MaxScore}",
+                StartDate = model.Deadline.AddHours(-1),
+                EndDate = model.Deadline,
+                Color = "#EF4444",
+                CreatedByUserId = userId,
+                ClassroomId = model.ClassroomId
+            };
+            _context.CalendarEvents.Add(calEvent);
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.NotifyClassroomAsync(
-                model.ClassroomId,
-                "Nouveau devoir",
-                $"Nouveau devoir '{model.Title}'. Date limite : {model.Deadline:dd MMM yyyy HH:mm}",
-                NotificationType.NewAssignment,
-                assignment.Id,
-                "Assignment"
-            );
+            // Load students for notifications and emails
+            var students = await _context.Students
+                .Include(s => s.User)
+                .Where(s => s.ClassroomId == model.ClassroomId)
+                .ToListAsync();
 
-            TempData["Success"] = "Devoir cree avec succes.";
+            try
+            {
+                await _notificationService.NotifyClassroomAsync(
+                    model.ClassroomId,
+                    "Nouveau devoir",
+                    $"Nouveau devoir '{model.Title}'. Date limite : {model.Deadline:dd MMM yyyy HH:mm}",
+                    NotificationType.NewAssignment,
+                    assignment.Id,
+                    "Assignment"
+                );
+            }
+            catch { /* Notification failure must not block assignment creation */ }
+
+            // Send email to each student in the classroom
+            foreach (var student in students)
+            {
+                try
+                {
+                    var teacherFullName = teacher.User.FirstName + " " + teacher.User.LastName;
+                    var emailBody = BuildNewAssignmentEmail(
+                        student.User.FirstName,
+                        model.Title,
+                        model.Description,
+                        model.Deadline,
+                        model.MaxScore,
+                        teacherFullName,
+                        fileName
+                    );
+                    await _emailService.SendAsync(
+                        student.User.Email,
+                        student.User.FirstName + " " + student.User.LastName,
+                        $"[ClassroomApp] Nouveau devoir : {model.Title}",
+                        emailBody
+                    );
+                }
+                catch { /* Email failure must not block assignment creation */ }
+            }
+
+            TempData["Success"] = "Devoir créé avec succès.";
 
             if (model.SubjectId.HasValue)
                 return RedirectToAction("Details", "Subject", new { id = model.SubjectId.Value });
@@ -199,6 +294,7 @@ namespace ClassroomApp.Controllers
                 MaxScore = assignment.MaxScore,
                 ClassroomId = assignment.ClassroomId,
                 SubjectId = assignment.SubjectId,
+                ExistingFileName = assignment.FileName,
                 AvailableSubjects = teacherSubjects.ToDictionary(s => s.Id, s => s.Name),
                 AvailableClassrooms = await _context.Classrooms.OrderBy(c => c.Name).ToDictionaryAsync(c => c.Id, c => c.Name)
             };
@@ -209,11 +305,20 @@ namespace ClassroomApp.Controllers
         [RoleAuthorize("Teacher")]
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(52_428_800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52_428_800)]
         public async Task<IActionResult> Edit(Guid id, CreateAssignmentViewModel model)
         {
             var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
             if (teacher == null) return NotFound();
+
+            if (model.AttachmentFile != null && model.AttachmentFile.Length > 0
+                && !_fileService.IsAllowedCourseFile(model.AttachmentFile))
+            {
+                ModelState.AddModelError("AttachmentFile",
+                    "Type ou taille invalide (max 50 MB). Formats : PDF, DOCX, PPTX, ZIP, images.");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -234,8 +339,20 @@ namespace ClassroomApp.Controllers
             assignment.SubjectId = model.SubjectId;
             assignment.UpdatedAt = DateTime.UtcNow;
 
+            // Replace attachment if a new file was provided
+            if (model.AttachmentFile != null && model.AttachmentFile.Length > 0)
+            {
+                if (!string.IsNullOrEmpty(assignment.FilePath))
+                    _fileService.DeleteFile(assignment.FilePath);
+
+                assignment.FilePath = await _fileService.SaveFileAsync(model.AttachmentFile, "assignments");
+                assignment.FileName = model.AttachmentFile.FileName;
+                assignment.FileSize = model.AttachmentFile.Length;
+                assignment.ContentType = model.AttachmentFile.ContentType;
+            }
+
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Devoir modifie avec succes.";
+            TempData["Success"] = "Devoir modifié avec succès.";
 
             if (model.SubjectId.HasValue)
                 return RedirectToAction("Details", "Subject", new { id = model.SubjectId.Value });
@@ -255,11 +372,13 @@ namespace ClassroomApp.Controllers
             var assignment = await _context.Assignments.FirstOrDefaultAsync(a => a.Id == id && a.TeacherId == teacher.Id);
             if (assignment == null) return NotFound();
 
-            var subjectId = assignment.SubjectId;
+            if (!string.IsNullOrEmpty(assignment.FilePath))
+                _fileService.DeleteFile(assignment.FilePath);
+
             _context.Assignments.Remove(assignment);
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Devoir supprime avec succes.";
+            TempData["Success"] = "Devoir supprimé avec succès.";
 
             var returnSubjectId = Request.Form["returnSubjectId"].FirstOrDefault();
             if (Guid.TryParse(returnSubjectId, out var returnId))
@@ -299,6 +418,9 @@ namespace ClassroomApp.Controllers
                 TotalStudents = assignment.Classroom.Students.Count,
                 SubmissionCount = assignment.Submissions.Count,
                 GradedCount = assignment.Submissions.Count(s => s.Status == SubmissionStatus.Graded),
+                AttachmentFileName = assignment.FileName,
+                AttachmentFilePath = assignment.FilePath,
+                AttachmentFileSize = assignment.FileSize,
                 Submissions = assignment.Classroom.Students.Select(student =>
                 {
                     var sub = assignment.Submissions.FirstOrDefault(s => s.StudentId == student.Id);
@@ -402,6 +524,9 @@ namespace ClassroomApp.Controllers
                 MaxScore = assignment.MaxScore,
                 CreatedAt = assignment.CreatedAt,
                 TeacherName = assignment.Teacher.User.FirstName + " " + assignment.Teacher.User.LastName,
+                AttachmentFileName = assignment.FileName,
+                AttachmentFilePath = assignment.FilePath,
+                AttachmentFileSize = assignment.FileSize,
                 MySubmissionStatus = sub?.Status,
                 MyScore = sub?.Score,
                 MyTeacherComment = sub?.TeacherComment,
@@ -421,6 +546,92 @@ namespace ClassroomApp.Controllers
             };
 
             return View(vm);
+        }
+
+        /// <summary>Downloads the teacher-attached file for an assignment.</summary>
+        [RoleAuthorize("Student", "Teacher")]
+        [HttpGet]
+        public async Task<IActionResult> Download(Guid id)
+        {
+            var assignment = await _context.Assignments
+                .Include(a => a.Classroom)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (assignment == null || string.IsNullOrEmpty(assignment.FilePath))
+                return NotFound();
+
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var role = User.FindFirst(ClaimTypes.Role)!.Value;
+
+            if (role == "Student")
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.UserId == userId);
+                if (student == null || student.ClassroomId != assignment.ClassroomId)
+                    return Forbid();
+            }
+            else if (role == "Teacher")
+            {
+                var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.UserId == userId);
+                if (teacher == null || assignment.TeacherId != teacher.Id)
+                    return Forbid();
+            }
+
+            var stream = _fileService.GetFileStream(assignment.FilePath);
+            if (stream == null) return NotFound();
+
+            var ct = string.IsNullOrEmpty(assignment.ContentType) ? "application/octet-stream" : assignment.ContentType;
+            return File(stream, ct, assignment.FileName ?? "attachment");
+        }
+
+        // --- Private helpers ---
+
+        private static string BuildNewAssignmentEmail(
+            string studentFirstName,
+            string title,
+            string description,
+            DateTime deadline,
+            int maxScore,
+            string teacherName,
+            string? attachmentFileName)
+        {
+            var attachmentSection = !string.IsNullOrEmpty(attachmentFileName)
+                ? $"<p style='margin:12px 0;'><strong>Fichier joint :</strong> {System.Net.WebUtility.HtmlEncode(attachmentFileName)}</p>"
+                : string.Empty;
+
+            return $"""
+                <!DOCTYPE html>
+                <html>
+                <body style="font-family:Arial,sans-serif;color:#222;max-width:600px;margin:auto;">
+                  <div style="background:#4f46e5;padding:24px;border-radius:8px 8px 0 0;">
+                    <h2 style="color:#fff;margin:0;">Nouveau devoir assign&eacute;</h2>
+                  </div>
+                  <div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;">
+                    <p>Bonjour <strong>{System.Net.WebUtility.HtmlEncode(studentFirstName)}</strong>,</p>
+                    <p>Un nouveau devoir a &eacute;t&eacute; publi&eacute; par <strong>{System.Net.WebUtility.HtmlEncode(teacherName)}</strong>&nbsp;:</p>
+                    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                      <tr style="background:#f3f4f6;">
+                        <td style="padding:10px;font-weight:bold;width:40%;">Titre</td>
+                        <td style="padding:10px;">{System.Net.WebUtility.HtmlEncode(title)}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px;font-weight:bold;">Consignes</td>
+                        <td style="padding:10px;">{System.Net.WebUtility.HtmlEncode(description)}</td>
+                      </tr>
+                      <tr style="background:#f3f4f6;">
+                        <td style="padding:10px;font-weight:bold;">Date limite</td>
+                        <td style="padding:10px;"><strong style="color:#dc2626;">{deadline:dd/MM/yyyy HH:mm} UTC</strong></td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px;font-weight:bold;">Note maximale</td>
+                        <td style="padding:10px;">{maxScore} pts</td>
+                      </tr>
+                    </table>
+                    {attachmentSection}
+                    <p style="color:#6b7280;font-size:13px;margin-top:24px;">Connectez-vous &agrave; ClassroomApp pour soumettre votre travail.</p>
+                  </div>
+                </body>
+                </html>
+                """;
         }
     }
 }

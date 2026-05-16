@@ -150,6 +150,13 @@ namespace ClassroomApp.Controllers
                 return View(model);
             }
 
+            if (model.File == null || model.File.Length == 0)
+            {
+                ModelState.AddModelError("File", "Veuillez selectionner un fichier.");
+                await ReloadDropdowns();
+                return View(model);
+            }
+
             if (!_fileService.IsAllowedCourseFile(model.File))
             {
                 ModelState.AddModelError("File", "Type ou taille de fichier invalide (max 50MB). Autorises : PDF, DOCX, PPTX, ZIP, images.");

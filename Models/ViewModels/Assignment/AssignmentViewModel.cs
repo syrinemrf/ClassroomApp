@@ -20,6 +20,11 @@ namespace ClassroomApp.Models.ViewModels.Assignment
         public int SubmissionCount { get; set; }
         public int GradedCount { get; set; }
 
+        // Optional teacher attachment
+        public string? AttachmentFileName { get; set; }
+        public string? AttachmentFilePath { get; set; }
+        public long? AttachmentFileSize { get; set; }
+
         // Student-specific
         public SubmissionStatus? MySubmissionStatus { get; set; }
         public int? MyScore { get; set; }
