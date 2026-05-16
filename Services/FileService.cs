@@ -2,7 +2,7 @@ namespace ClassroomApp.Services
 {
     public class FileService : IFileService
     {
-        private readonly IWebHostEnvironment _env;
+        private readonly string _uploadsRoot;
 
         private static readonly string[] AllowedCourseExtensions = { ".pdf", ".docx", ".pptx", ".zip", ".jpg", ".jpeg", ".png", ".webp" };
         private static readonly string[] AllowedSubmissionExtensions = { ".pdf", ".docx", ".pptx", ".zip", ".jpg", ".jpeg", ".png", ".webp", ".txt" };
@@ -11,14 +11,30 @@ namespace ClassroomApp.Services
         private const long MaxSubmissionSize = 20 * 1024 * 1024; // 20 MB
         private const long MaxProfileSize = 2 * 1024 * 1024; // 2 MB
 
-        public FileService(IWebHostEnvironment env)
+        public FileService(IConfiguration configuration)
         {
-            _env = env;
+            var configuredUploadsRoot = configuration["Storage:UploadsRoot"];
+            _uploadsRoot = string.IsNullOrWhiteSpace(configuredUploadsRoot)
+                ? Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "ClassroomApp",
+                    "uploads")
+                : configuredUploadsRoot;
+
+            if (string.IsNullOrWhiteSpace(_uploadsRoot))
+            {
+                _uploadsRoot = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "ClassroomApp",
+                    "uploads");
+            }
+
+            Directory.CreateDirectory(_uploadsRoot);
         }
 
         public async Task<string> SaveFileAsync(IFormFile file, string folder)
         {
-            var uploadsPath = Path.Combine(_env.WebRootPath, "uploads", folder);
+            var uploadsPath = Path.Combine(_uploadsRoot, folder);
             Directory.CreateDirectory(uploadsPath);
 
             var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
@@ -33,7 +49,7 @@ namespace ClassroomApp.Services
         public void DeleteFile(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath)) return;
-            var fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/'));
+            var fullPath = ResolveFullPath(relativePath);
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
         }
@@ -41,8 +57,21 @@ namespace ClassroomApp.Services
         public FileStream? GetFileStream(string relativePath)
         {
             if (string.IsNullOrEmpty(relativePath)) return null;
-            var fullPath = Path.Combine(_env.WebRootPath, relativePath.TrimStart('/'));
+            var fullPath = ResolveFullPath(relativePath);
             return File.Exists(fullPath) ? new FileStream(fullPath, FileMode.Open, FileAccess.Read) : null;
+        }
+
+        private string ResolveFullPath(string relativePath)
+        {
+            var normalizedPath = relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            const string uploadsPrefix = "uploads";
+
+            if (normalizedPath.StartsWith(uploadsPrefix + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                normalizedPath = normalizedPath[(uploadsPrefix.Length + 1)..];
+            }
+
+            return Path.Combine(_uploadsRoot, normalizedPath);
         }
 
         public bool IsAllowedCourseFile(IFormFile file)

@@ -4,6 +4,7 @@ using ClassroomApp.Hubs;
 using ClassroomApp.Services;
 using Hangfire;
 using Hangfire.Dashboard;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -16,6 +17,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.MaxRequestBodySize = 52_428_800;
+});
+
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 52_428_800;
 });
 
 // Serilog
@@ -58,6 +64,16 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+var uploadsRoot = builder.Configuration["Storage:UploadsRoot"];
+if (string.IsNullOrWhiteSpace(uploadsRoot))
+{
+    uploadsRoot = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "ClassroomApp",
+        "uploads");
+}
+Directory.CreateDirectory(uploadsRoot);
+
 // Create database and apply pending migrations automatically
 using (var scope = app.Services.CreateScope())
 {
@@ -74,6 +90,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    RequestPath = "/uploads"
+});
 app.UseRouting();
 
 app.UseAuthentication();
