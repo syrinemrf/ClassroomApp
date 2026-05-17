@@ -3,12 +3,12 @@
     ViewData["Title"] = "My Submissions";
 }
 <div class="container-fluid">
-    <h4 class="mb-4"><i class="fas fa-clipboard-check me-2"></i>My Submissions & Grades</h4>
+    <h4 class="mb-4"><i class="fas fa-clipboard-check me-2"></i>Mes remises &amp; Notes</h4>
     <div class="card shadow-sm">
         <div class="card-body">
             <table class="table table-hover" id="mySubmissionsTable">
                 <thead>
-                    <tr><th>Assignment</th><th>Classroom</th><th>Submitted</th><th>Status</th><th>Score</th><th>Comment</th></tr>
+                    <tr><th>Devoir</th><th>Classe</th><th>Remis le</th><th>Statut</th><th>Note</th><th>Commentaire</th></tr>
                 </thead>
                 <tbody>
                     @foreach (var s in Model.Submissions)
@@ -23,7 +23,7 @@
                         <tr>
                             <td class="fw-bold">@s.AssignmentTitle</td>
                             <td>@s.ClassroomName</td>
-                            <td>@(s.SubmittedAt?.ToString("MMM dd HH:mm") ?? "—")</td>
+                            <td>@(s.SubmittedAt?.ToString("MMM dd HH:mm") ?? "ï¿½")</td>
                             <td><span class="badge @statusClass">@s.Status</span></td>
                             <td>
                                 @if (s.Score.HasValue)
@@ -33,10 +33,10 @@
                                 }
                                 else
                                 {
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted">ï¿½</span>
                                 }
                             </td>
-                            <td>@(s.TeacherComment ?? "—")</td>
+                            <td>@(s.TeacherComment ?? "ï¿½")</td>
                         </tr>
                     }
                 </tbody>

@@ -44,18 +44,18 @@
         </div>
         <div class="col-lg-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Edit Information</h6></div>
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Modifier les informations</h6></div>
                 <div class="card-body">
                     <form asp-action="Profile" method="post">
                         @Html.AntiForgeryToken()
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <label asp-for="FirstName" class="form-label">Prénom</label>
                                 <input asp-for="FirstName" class="form-control" />
                                 <span asp-validation-for="FirstName" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
-                                <label asp-for="LastName" class="form-label">Last Name</label>
+                                <label asp-for="LastName" class="form-label">Nom</label>
                                 <input asp-for="LastName" class="form-control" />
                                 <span asp-validation-for="LastName" class="text-danger small"></span>
                             </div>
@@ -67,11 +67,11 @@
                         @if (Model.Role == Role.Teacher)
                         {
                             <div class="mb-3">
-                                <label asp-for="Department" class="form-label">Department</label>
+                                <label asp-for="Department" class="form-label">Département</label>
                                 <input asp-for="Department" class="form-control" />
                             </div>
                             <div class="mb-3">
-                                <label asp-for="Bio" class="form-label">Bio</label>
+                                <label asp-for="Bio" class="form-label">Biographie</label>
                                 <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
                             </div>
                         }
@@ -79,20 +79,20 @@
                         {
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Student Number</label>
+                                    <label class="form-label">Numéro étudiant</label>
                                     <input class="form-control" value="@Model.StudentNumber" disabled />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Classroom</label>
+                                    <label class="form-label">Classe</label>
                                     <input class="form-control" value="@Model.ClassroomName" disabled />
                                 </div>
                             </div>
                         }
                         <div class="mb-3">
-                            <label class="form-label">Member Since</label>
-                            <input class="form-control" value="@Model.CreatedAt.ToString("MMMM dd, yyyy")" disabled />
+                            <label class="form-label">Membre depuis</label>
+                            <input class="form-control" value="@Model.CreatedAt.ToString("dd MMMM yyyy")" disabled />
                         </div>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Changes</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Enregistrer</button>
                     </form>
                 </div>
             </div>

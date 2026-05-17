@@ -20,10 +20,10 @@ namespace ClassroomApp.Services
         public async Task<string> GetAIResponseAsync(string userMessage, string? context = null)
         {
             var apiKey = _config["Gemini:ApiKey"];
-            if (string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("YOUR_GEMINI"))
             {
                 _logger.LogWarning("Gemini API key not configured.");
-                return "Le chatbot n'est pas configuré pour le moment.";
+                return "L'assistant IA n'est pas configuré. Veuillez définir la clé Gemini:ApiKey.";
             }
 
             try

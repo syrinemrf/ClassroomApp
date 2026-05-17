@@ -1,10 +1,10 @@
 @{
-    ViewData["Title"] = "Submit Assignment";
+    ViewData["Title"] = "Remettre le devoir";
     var assignment = ViewBag.Assignment as Assignment;
     var existing = ViewBag.ExistingSubmission as Submission;
 }
 <div class="container-fluid">
-    <h4 class="mb-4"><i class="fas fa-upload me-2"></i>Submit: @assignment?.Title</h4>
+    <h4 class="mb-4"><i class="fas fa-upload me-2"></i>Remise : @assignment?.Title</h4>
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card shadow-sm">
@@ -12,9 +12,9 @@
                     @if (existing != null)
                     {
                         <div class="alert alert-info">
-                            <i class="fas fa-check-circle me-2"></i>You have already submitted this assignment.
-                            <br /><strong>File:</strong> @existing.FileName
-                            <br /><strong>Submitted:</strong> @existing.SubmittedAt.ToString("MMM dd, yyyy HH:mm")
+                            <i class="fas fa-check-circle me-2"></i>Vous avez déjà remis ce devoir.
+                            <br /><strong>Fichier :</strong> @existing.FileName
+                            <br /><strong>Remis le :</strong> @existing.SubmittedAt.ToString("dd MMM yyyy HH:mm")
                         </div>
                     }
                     else
@@ -22,16 +22,16 @@
                         <form asp-action="Submit" asp-route-assignmentId="@assignment?.Id" method="post" enctype="multipart/form-data">
                             @Html.AntiForgeryToken()
                             <div class="mb-3">
-                                <label class="form-label">Upload your file</label>
+                                <label class="form-label">Téléversez votre fichier</label>
                                 <div class="file-upload-zone p-5 text-center border rounded">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">Drag & drop or click to select</p>
+                                    <p class="text-muted">Glissez-déposez ou cliquez pour sélectionner</p>
                                     <input type="file" name="file" class="form-control" accept=".pdf,.docx,.pptx,.zip,.jpg,.jpeg,.png,.webp,.txt" required />
-                                    <small class="text-muted">Max 20MB. Allowed: PDF, DOCX, PPTX, ZIP, Images, TXT</small>
+                                    <small class="text-muted">Max 20 Mo. Format : PDF, DOCX, PPTX, ZIP, Images, TXT</small>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="fas fa-paper-plane me-2"></i>Submit
+                                <i class="fas fa-paper-plane me-2"></i>Remettre
                             </button>
                         </form>
                     }
@@ -40,17 +40,17 @@
         </div>
         <div class="col-lg-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Assignment Info</h6></div>
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Informations sur le devoir</h6></div>
                 <div class="card-body">
                     <p><strong>@assignment?.Title</strong></p>
                     <p class="small text-muted">@assignment?.Description</p>
                     <hr />
-                    <p class="small"><i class="fas fa-calendar me-1"></i>Deadline: <strong>@assignment?.Deadline.ToString("MMM dd, yyyy HH:mm")</strong></p>
-                    <p class="small"><i class="fas fa-star me-1"></i>Max Score: <strong>@assignment?.MaxScore</strong></p>
+                    <p class="small"><i class="fas fa-calendar me-1"></i>Échéance : <strong>@assignment?.Deadline.ToString("dd MMM yyyy HH:mm")</strong></p>
+                    <p class="small"><i class="fas fa-star me-1"></i>Note max : <strong>@assignment?.MaxScore</strong></p>
                     @if (assignment != null && DateTime.UtcNow > assignment.Deadline)
                     {
                         <div class="alert alert-warning small p-2">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Deadline has passed. Submission will be marked as late.
+                            <i class="fas fa-exclamation-triangle me-1"></i>L'échéance est dépassée. La remise sera marquée comme en retard.
                         </div>
                     }
                 </div>

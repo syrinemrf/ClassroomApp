@@ -1,20 +1,20 @@
 @model GradeSubmissionViewModel
 @{
-    ViewData["Title"] = "Grade Submission";
+    ViewData["Title"] = "Noter le devoir";
 }
 <div class="container-fluid">
-    <h4 class="mb-4"><i class="fas fa-pen me-2"></i>Grade Submission</h4>
+    <h4 class="mb-4"><i class="fas fa-pen me-2"></i>Noter le devoir</h4>
     <div class="row g-4">
         <div class="col-lg-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Student Info</h6></div>
+                <div class="card-header bg-white"><h6 class="mb-0 fw-bold">Informations étudiant</h6></div>
                 <div class="card-body">
                     <p><strong>@Model.StudentName</strong></p>
                     <p class="small text-muted">@Model.StudentNumber</p>
                     <hr />
-                    <p class="small"><strong>Assignment:</strong> @Model.AssignmentTitle</p>
-                    <p class="small"><strong>Status:</strong> <span class="badge bg-info">@Model.Status</span></p>
-                    <p class="small"><strong>Submitted:</strong> @(Model.SubmittedAt?.ToString("MMM dd, yyyy HH:mm") ?? "�")</p>
+                    <p class="small"><strong>Devoir :</strong> @Model.AssignmentTitle</p>
+                    <p class="small"><strong>Statut :</strong> <span class="badge bg-info">@Model.Status</span></p>
+                    <p class="small"><strong>Remis le :</strong> @(Model.SubmittedAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</p>
                     @if (!string.IsNullOrEmpty(Model.FileName))
                     {
                         <a href="@Url.Action("Download", new { id = Model.SubmissionId })" class="btn btn-sm btn-outline-primary w-100">
@@ -32,17 +32,17 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="SubmissionId" />
                         <div class="mb-3">
-                            <label asp-for="Score" class="form-label">Score (out of @Model.MaxScore)</label>
+                            <label asp-for="Score" class="form-label">Note (sur @Model.MaxScore)</label>
                             <input asp-for="Score" class="form-control form-control-lg" type="number" min="0" max="@Model.MaxScore" />
                             <span asp-validation-for="Score" class="text-danger small"></span>
                         </div>
                         <div class="mb-3">
-                            <label asp-for="TeacherComment" class="form-label">Comment (optional)</label>
-                            <textarea asp-for="TeacherComment" class="form-control" rows="4" placeholder="Feedback for the student..."></textarea>
+                            <label asp-for="TeacherComment" class="form-label">Commentaire (optionnel)</label>
+                            <textarea asp-for="TeacherComment" class="form-control" rows="4" placeholder="Feedback pour l'étudiant..."></textarea>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>Save Grade</button>
-                            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">Cancel</a>
+                            <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save me-2"></i>Enregistrer la note</button>
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">Annuler</a>
                         </div>
                     </form>
                 </div>

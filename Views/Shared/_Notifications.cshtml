@@ -1,4 +1,5 @@
 @using System.Security.Claims
+@Html.AntiForgeryToken()
 <div class="dropdown">
     <button class="btn btn-link position-relative notification-bell" data-bs-toggle="dropdown" id="notificationBell">
         <i class="fas fa-bell fa-lg"></i>
@@ -53,7 +54,7 @@
                 const icon = getNotificationIcon(notif.type);
                 const bgClass = notif.isRead ? 'bg-light' : 'bg-light border-start border-primary';
                 html += `
-                    <div class="notification-item p-3 border-bottom ${bgClass}" style="cursor: pointer;" onclick="handleNotificationClick('${notif.id}', '${notif.relatedEntityId}', '${notif.relatedEntityType}')">
+                    <div class="notification-item p-3 border-bottom ${bgClass}" style="cursor: pointer;" onclick="handleNotificationClick('${notif.id}')">`;
                         <div class="d-flex gap-2">
                             <div class="fs-5">${icon}</div>
                             <div class="flex-grow-1">
@@ -72,28 +73,18 @@
         }
     }
 
-    async function handleNotificationClick(notifId, relatedId, relatedType) {
+    async function handleNotificationClick(notifId) {
         try {
-            // Mark as read
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             const formData = new FormData();
             formData.append('id', notifId);
             
             await fetch('@Url.Action("MarkRead", "Notification")', {
                 method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                },
+                headers: { 'RequestVerificationToken': token },
                 body: formData
             });
 
-            // Get redirect URL
-            const response = await fetch(`@Url.Action("GetRedirectUrl", "Notification")?notificationId=${notifId}&relatedEntityId=${relatedId}&relatedEntityType=${relatedType}`);
-            const data = await response.json();
-            
-            if (data.url && data.url !== '#') {
-                window.location.href = data.url;
-            }
-            
             loadNotifications();
         } catch (error) {
             console.error('Erreur:', error);
@@ -102,11 +93,10 @@
 
     async function markAllNotificationsRead() {
         try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             await fetch('@Url.Action("MarkAllRead", "Notification")', {
                 method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                }
+                headers: { 'RequestVerificationToken': token }
             });
             loadNotifications();
         } catch (error) {

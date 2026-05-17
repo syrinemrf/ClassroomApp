@@ -21,9 +21,10 @@ namespace ClassroomApp.Services
             var smtpUser = _config["Email:SmtpUser"];
             var smtpPass = _config["Email:SmtpPass"];
 
-            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass)
+                || smtpUser.Contains("YOUR_EMAIL") || smtpPass.Contains("YOUR_APP_PASSWORD"))
             {
-                _logger.LogWarning("Email not sent to {Email}: SMTP is not configured.", toEmail);
+                _logger.LogWarning("Email not sent to {Email}: SMTP credentials are not configured. Set Email:SmtpUser and Email:SmtpPass in appsettings or .env file.", toEmail);
                 return;
             }
 
